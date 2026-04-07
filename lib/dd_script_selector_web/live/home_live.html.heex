@@ -1,0 +1,36 @@
+<Layouts.app flash={@flash}>
+  <section id="hero" class="py-16 text-center">
+    <h1 class="text-4xl font-bold tracking-tight">
+      Build your data donation script
+    </h1>
+    <p class="mt-4 text-lg text-base-content/70 max-w-prose mx-auto">
+      Configure your script using a simple form. We'll build a custom
+      single-page application from your configuration — ready to download
+      and deploy.
+    </p>
+    <div class="mt-8">
+      <.link href="/form" class="btn btn-primary btn-lg">
+        Get started <span aria-hidden="true">&rarr;</span>
+      </.link>
+    </div>
+  </section>
+
+  <section id="steps" class="py-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-center">
+      <div id="step-configure">
+        <div class="text-3xl font-bold text-primary mb-2">1</div>
+        <h2 class="text-lg font-semibold">Configure</h2>
+        <p class="mt-2 text-base-content/70">
+          Fill in the form to specify your script's behaviour and settings.
+        </p>
+      </div>
+      <div id="step-download">
+        <div class="text-3xl font-bold text-primary mb-2">2</div>
+        <h2 class="text-lg font-semibold">Download</h2>
+        <p class="mt-2 text-base-content/70">
+          Download your configured SPA as a zip file, ready to deploy.
+        </p>
+      </div>
+    </div>
+  </section>
+</Layouts.app>

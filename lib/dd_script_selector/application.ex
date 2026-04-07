@@ -10,7 +10,8 @@ defmodule DdScriptSelector.Application do
     children = [
       DdScriptSelectorWeb.Telemetry,
       DdScriptSelector.Repo,
-      {DNSCluster, query: Application.get_env(:dd_script_selector, :dns_cluster_query) || :ignore},
+      {DNSCluster,
+       query: Application.get_env(:dd_script_selector, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: DdScriptSelector.PubSub},
       # Start a worker by calling: DdScriptSelector.Worker.start_link(arg)
       # {DdScriptSelector.Worker, arg},
