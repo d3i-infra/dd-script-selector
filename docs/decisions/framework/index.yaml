@@ -1,0 +1,14 @@
+decisions:
+    "0001":
+        adr_id: "0001"
+        title: Use Phoenix LiveView as the primary UI framework
+        status: accepted
+        tags:
+            - elixir
+            - phoenix
+            - liveview
+            - frontend
+        links:
+            precedes: []
+            succeeds: []
+        comments: []

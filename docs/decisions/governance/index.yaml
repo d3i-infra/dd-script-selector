@@ -1,0 +1,12 @@
+decisions:
+    "0001":
+        adr_id: "0001"
+        title: Use MADR for architectural decision records
+        status: accepted
+        tags:
+            - process
+            - documentation
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
