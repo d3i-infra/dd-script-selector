@@ -37,6 +37,15 @@ topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
+// Trigger a file download from a push_event("trigger-download", %{filename, content})
+// where content is a base64-encoded string.
+window.addEventListener("phx:trigger-download", ({detail: {filename, content}}) => {
+  const a = document.createElement("a")
+  a.href = "data:application/octet-stream;base64," + content
+  a.download = filename
+  a.click()
+})
+
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 

@@ -28,15 +28,28 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   end
 
   def handle_info(:do_build, socket) do
-    content = "placeholder zip content"
+    platform_name = socket.assigns.selected
+    {filename, content} = build_flow(platform_name)
 
     socket =
       push_event(socket, "trigger-download", %{
-        filename: "script.zip",
+        filename: filename,
         content: Base.encode64(content)
       })
 
     socket = assign(socket, :building, false)
     {:noreply, socket}
+  end
+
+  # ---------------------------------------------------------------------------
+  # Private
+  # ---------------------------------------------------------------------------
+
+  defp build_flow(platform_name) do
+    filename = "#{platform_name}.txt"
+    path = Path.join(System.tmp_dir!(), filename)
+    content = "Platform: #{platform_name}\n"
+    File.write!(path, content)
+    {filename, File.read!(path)}
   end
 end
