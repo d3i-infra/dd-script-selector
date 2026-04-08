@@ -9,7 +9,7 @@ defmodule DdScriptSelectorWeb.HomeLiveTest do
 
   test "renders get started button", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
-    assert has_element?(view, "#hero a[href='/form']")
+    assert has_element?(view, "#hero a[href='/select']")
   end
 
   test "renders configure step", %{conn: conn} do

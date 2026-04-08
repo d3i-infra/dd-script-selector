@@ -35,7 +35,15 @@ defmodule DdScriptSelectorWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
+    <header class="px-4 sm:px-6 lg:px-8 py-4 border-b border-base-300">
+      <div class="mx-auto max-w-2xl">
+        <.link navigate="/" class="inline-flex items-center text-base-content hover:opacity-70 transition-opacity">
+          <.icon name="hero-home" class="size-5" />
+        </.link>
+      </div>
+    </header>
+
+    <main class="px-4 py-10 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-2xl space-y-4">
         {render_slot(@inner_block)}
       </div>

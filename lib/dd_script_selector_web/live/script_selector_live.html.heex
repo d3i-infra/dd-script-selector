@@ -1,0 +1,59 @@
+<Layouts.app flash={@flash}>
+  <div class="grid h-[calc(100vh-4rem)]" style="grid-template-columns: 280px 1fr;">
+    <%!-- Left column: platform list --%>
+    <aside class="overflow-y-auto border-r border-base-300 p-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-3">
+        Platforms
+      </h2>
+      <ul id="platform-list" phx-update="stream" class="space-y-1">
+        <li
+          :for={{dom_id, platform} <- @streams.platforms}
+          id={dom_id}
+        >
+          <label class={[
+            "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
+            @selected == platform.name && "bg-primary text-primary-content",
+            @selected != platform.name && "hover:bg-base-200"
+          ]}>
+            <input
+              type="radio"
+              name="platform"
+              class="hidden"
+              phx-click="select"
+              phx-value-name={platform.name}
+            />
+            {platform.name}
+          </label>
+        </li>
+      </ul>
+    </aside>
+
+    <%!-- Right column: detail panel --%>
+    <main class="overflow-y-auto p-8">
+      <div :if={is_nil(@selected)} id="detail-prompt" class="text-base-content/60 text-lg mt-8">
+        Select a platform to get started.
+      </div>
+
+      <div :if={not is_nil(@selected)} id="detail-panel">
+        <h1 class="text-2xl font-bold mb-4">{@selected}</h1>
+        <div class="prose max-w-prose">
+          <p class={[
+            "whitespace-pre-wrap",
+            if(is_nil(@selected_platform.doc),
+              do: "text-base-content/50 italic",
+              else: "text-base-content/80"
+            )
+          ]}>
+            {@selected_platform.doc || "No description available."}
+          </p>
+        </div>
+        <div class="mt-8">
+          <button disabled={@building} phx-click="build" class="btn btn-primary">
+            <span :if={@building} class="loading loading-spinner loading-sm"></span>
+            {if @building, do: "Building...", else: "Build"}
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layouts.app>

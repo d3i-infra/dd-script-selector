@@ -18,6 +18,7 @@ defmodule DdScriptSelectorWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive
+    live "/select", ScriptSelectorLive
   end
 
   # Other scopes may use custom stacks.

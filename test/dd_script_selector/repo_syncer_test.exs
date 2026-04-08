@@ -88,9 +88,7 @@ defmodule DdScriptSelector.RepoSyncerTest do
       name = :"repo_syncer_#{System.unique_integer([:positive])}"
 
       pid =
-        start_supervised!(
-          {RepoSyncer, [name: name, repo_url: source, target_dir: target]}
-        )
+        start_supervised!({RepoSyncer, [name: name, repo_url: source, target_dir: target]})
 
       # Give the initial :sync message time to be processed
       Process.sleep(500)

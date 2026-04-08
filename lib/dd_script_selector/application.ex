@@ -13,7 +13,8 @@ defmodule DdScriptSelector.Application do
       {DNSCluster,
        query: Application.get_env(:dd_script_selector, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: DdScriptSelector.PubSub},
-      {DdScriptSelector.RepoSyncer, Application.get_env(:dd_script_selector, :repo_syncer_opts, [])},
+      {DdScriptSelector.RepoSyncer,
+       Application.get_env(:dd_script_selector, :repo_syncer_opts, [])},
       # Start to serve requests, typically the last entry
       DdScriptSelectorWeb.Endpoint
     ]
