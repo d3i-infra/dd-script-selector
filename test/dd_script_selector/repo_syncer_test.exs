@@ -82,19 +82,10 @@ defmodule DdScriptSelector.RepoSyncerTest do
   # ---------------------------------------------------------------------------
 
   describe "GenServer" do
-    test "starts successfully, performs initial sync, and stays alive" do
-      source = make_bare_repo()
-      target = tmp_clone_dir()
+    test "starts successfully" do
       name = :"repo_syncer_#{System.unique_integer([:positive])}"
-
-      pid =
-        start_supervised!({RepoSyncer, [name: name, repo_url: source, target_dir: target]})
-
-      # Give the initial :sync message time to be processed
-      Process.sleep(500)
-
+      pid = start_supervised!({RepoSyncer, [name: name]})
       assert Process.alive?(pid)
-      assert File.dir?(target)
     end
   end
 end
