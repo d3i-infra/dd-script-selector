@@ -39,3 +39,8 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# Point the RepoSyncer at an invalid URL so it fails fast without network I/O.
+config :dd_script_selector, :repo_syncer_opts,
+  repo_url: "/nonexistent_repo_syncer_test_url",
+  target_dir: Path.join(System.tmp_dir!(), "dd_script_selector_test/auto_sync")

@@ -35,3 +35,5 @@ dd_script_selector-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Cloned repositories used for script extraction.
+/repos/
