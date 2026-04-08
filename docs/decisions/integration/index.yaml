@@ -1,0 +1,27 @@
+decisions:
+    "0001":
+        adr_id: "0001"
+        title: Use a GenServer with git clone for periodic repository sync
+        status: accepted
+        tags:
+            - genserver
+            - otp
+            - git
+            - integration
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
+    "0002":
+        adr_id: "0002"
+        title: Use pure-Elixir regex parsing for Python docstring extraction
+        status: accepted
+        tags:
+            - parsing
+            - python
+            - regex
+            - integration
+        links:
+            precedes: []
+            succeeds: []
+        comments: []
