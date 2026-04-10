@@ -57,6 +57,15 @@ if config_env() == :prod do
 
   config :dd_script_selector, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  platforms_dir =
+    System.get_env("PLATFORMS_DIR") ||
+      raise """
+      environment variable PLATFORMS_DIR is missing.
+      Set it to the directory containing the Python platform scripts.
+      """
+
+  config :dd_script_selector, :platforms_dir, platforms_dir
+
   config :dd_script_selector, DdScriptSelectorWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [

@@ -4,17 +4,15 @@ defmodule DdScriptSelector.Platforms do
   """
 
   alias DdScriptSelector.PyDocExtractor
-  alias DdScriptSelector.RepoSyncer
 
   @doc """
-  Lists platforms from the default platforms directory in the cloned repo.
+  Lists platforms from the configured platforms directory.
 
   Returns a list of `%{name: String.t(), doc: String.t() | nil}` maps,
   sorted alphabetically by filename.
   """
   def list do
-    default_dir = RepoSyncer.platforms_dir()
-    dir = Application.get_env(:dd_script_selector, :platforms_dir, default_dir)
+    dir = Application.fetch_env!(:dd_script_selector, :platforms_dir)
     list(dir)
   end
 

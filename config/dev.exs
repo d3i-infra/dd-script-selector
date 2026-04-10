@@ -90,3 +90,6 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+config :dd_script_selector, :platforms_dir,
+  Path.expand("../../data-donation-task/packages/python/port/platforms", __DIR__)
