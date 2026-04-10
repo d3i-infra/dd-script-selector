@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project
+
+A Phoenix LiveView app for browsing and selecting data-donation task scripts. It reads Python platform scripts from a configured directory, extracts their docstrings, and lets users pick a script via a web UI.
+
+Key LiveViews: `HomeLive` (`/`), `ScriptSelectorLive` (`/select`)
+Key business modules: `DdScriptSelector.Platforms` (lists platform scripts), `DdScriptSelector.PyDocExtractor` (parses Python docstrings)
+
 ## Commands
 
 ```bash
@@ -35,7 +42,7 @@ Assets:
 - `assets/js/app.js` and `assets/css/app.css` are the only supported bundles — vendor deps must be imported here
 - Tailwind v4 uses `@import "tailwindcss" source(none)` syntax — no `tailwind.config.js`
 
-## Key Guidelines (from AGENTS.md)
+## Key Guidelines
 
 ### HTTP
 Use `Req` for HTTP requests. Do **not** use `:httpoison`, `:tesla`, or `:httpc`.
@@ -54,6 +61,10 @@ Use `Req` for HTTP requests. Do **not** use `:httpoison`, `:tesla`, or `:httpc`.
 - Never pass a changeset directly to `<.form>` or access `@changeset` in templates
 - Use `<.input field={@form[:field]}>` from `core_components.ex`
 
+### Ecto
+- Always preload associations in queries before accessing them in templates
+- Use `Ecto.Changeset.get_field/2` to read changeset fields — never `changeset[:field]`
+
 ### Elixir gotchas
 - Lists don't support index access (`list[i]` is invalid) — use `Enum.at/2`
 - `if/else if` doesn't exist — use `cond` or `case` for multiple branches
@@ -70,5 +81,6 @@ Use `Req` for HTTP requests. Do **not** use `:httpoison`, `:tesla`, or `:httpc`.
 
 ### Testing
 - Use `start_supervised!/1` for processes; avoid `Process.sleep/1`
+- To wait for a process to finish, use `Process.monitor/1` + `assert_receive {:DOWN, ^ref, :process, ^pid, :normal}` — not sleep
 - Use `has_element?/2` and `element/2` from `Phoenix.LiveViewTest` — never test raw HTML strings
 - `LazyHTML` (included) is available for selector-based HTML inspection in tests
