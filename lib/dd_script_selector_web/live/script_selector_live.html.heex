@@ -1,19 +1,17 @@
 <Layouts.app flash={@flash}>
-  <div class="grid h-[calc(100vh-4rem)]" style="grid-template-columns: 280px 1fr;">
-    <%!-- Left column: platform list --%>
-    <aside class="overflow-y-auto border-r border-base-300 p-4">
-      <h2 class="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-3">
-        Platforms
-      </h2>
-      <ul id="platform-list" phx-update="stream" class="space-y-1">
+  <%!-- Step 1: Platform Selection --%>
+  <div :if={@step == :select_platform} class="flex flex-col h-[calc(100vh-4rem)]">
+    <div class="flex-1 overflow-y-auto p-8">
+      <h1 class="text-2xl font-bold mb-6">Select a Platform</h1>
+      <ul id="platform-list" phx-update="stream" class="space-y-2 max-w-lg">
         <li
-          :for={{dom_id, platform} <- @streams.platforms}
-          id={dom_id}
+          :for={platform <- @platforms}
+          id={"platform-#{platform.name}"}
         >
           <label class={[
-            "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
-            @selected == platform.name && "bg-primary text-primary-content",
-            @selected != platform.name && "hover:bg-base-200"
+            "flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors border",
+            @selected == platform.name && "bg-primary text-primary-content border-primary",
+            @selected != platform.name && "border-base-300 hover:bg-base-200"
           ]}>
             <input
               type="radio"
@@ -26,34 +24,259 @@
           </label>
         </li>
       </ul>
-    </aside>
+    </div>
 
-    <%!-- Right column: detail panel --%>
-    <main class="overflow-y-auto p-8">
-      <div :if={is_nil(@selected)} id="detail-prompt" class="text-base-content/60 text-lg mt-8">
-        Select a platform to get started.
-      </div>
+    <div class="border-t border-base-300 p-4 flex justify-end">
+      <button
+        phx-click="next_step"
+        class={["btn btn-primary", is_nil(@selected) && "btn-disabled"]}
+        disabled={is_nil(@selected)}
+      >
+        Next →
+      </button>
+    </div>
+  </div>
 
-      <div :if={not is_nil(@selected)} id="detail-panel">
-        <h1 class="text-2xl font-bold mb-4">{@selected}</h1>
-        <div class="prose max-w-prose">
-          <p class={[
-            "whitespace-pre-wrap",
-            if(is_nil(@selected_platform.doc),
-              do: "text-base-content/50 italic",
-              else: "text-base-content/80"
-            )
-          ]}>
-            {@selected_platform.doc || "No description available."}
-          </p>
-        </div>
-        <div class="mt-8">
-          <button disabled={@building} phx-click="build" class="btn btn-primary">
-            <span :if={@building} class="loading loading-spinner loading-sm"></span>
-            {if @building, do: "Building...", else: "Build"}
+  <%!-- Step 2: Configuration --%>
+  <div :if={@step == :configure} class="flex flex-col h-[calc(100vh-4rem)]">
+    <div class="flex-1 overflow-y-auto p-8">
+      <%!-- Editable title --%>
+      <div class="flex items-center gap-2 mb-2">
+        <h1 :if={not @editing_title} class="text-2xl font-bold">{@title}</h1>
+        <button
+          :if={not @editing_title}
+          phx-click="edit_title"
+          class="text-base-content/40 hover:text-base-content transition-colors"
+          title="Edit title"
+        >
+          <.icon name="hero-pencil-square" class="h-5 w-5" />
+        </button>
+        <form :if={@editing_title} phx-submit="save_title" class="flex items-center gap-2">
+          <input
+            name="title"
+            type="text"
+            value={@title}
+            class="input input-bordered input-sm font-bold text-lg"
+            autofocus
+          />
+          <button type="submit" class="btn btn-xs btn-primary">Save</button>
+          <button type="button" phx-click="cancel_edit_title" class="btn btn-xs btn-ghost">
+            Cancel
           </button>
+        </form>
+      </div>
+
+      <%!-- Platform description --%>
+      <p class={[
+        "mb-6 whitespace-pre-wrap text-sm",
+        if(is_nil(@selected_platform.doc),
+          do: "text-base-content/50 italic",
+          else: "text-base-content/60"
+        )
+      ]}>
+        {@selected_platform.doc || "No description available."}
+      </p>
+
+      <%!-- Language toggle --%>
+      <div :if={length(@available_languages) > 1} id="language-toggle" class="flex gap-1 mb-6">
+        <button
+          :for={lang <- @available_languages}
+          phx-click="change_language"
+          phx-value-lang={lang}
+          class={[
+            "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+            @language == lang && "bg-primary text-primary-content border-primary",
+            @language != lang && "border-base-300 hover:bg-base-200"
+          ]}
+        >
+          {lang}
+        </button>
+      </div>
+
+      <%!-- Table configurator --%>
+      <div :if={@tables != []} class="flex gap-2 mb-3">
+        <button phx-click="select_all_tables" class="btn btn-xs btn-outline">Select all</button>
+        <button phx-click="deselect_all_tables" class="btn btn-xs btn-outline">
+          Deselect all
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div
+          :for={table <- @tables}
+          id={"table-#{table.id}"}
+          class="border border-base-300 rounded-lg p-4"
+        >
+          <%!-- Table header with enable/disable checkbox --%>
+          <div class="flex items-start gap-3">
+            <input
+              type="checkbox"
+              class="checkbox checkbox-primary mt-0.5"
+              checked={table.enabled}
+              phx-click="toggle_table"
+              phx-value-id={table.id}
+            />
+            <div class="flex-1 min-w-0">
+              <%!-- Editable title --%>
+              <div class="flex items-center gap-2">
+                <span
+                  :if={@editing_table != {table.id, "title"}}
+                  class="font-semibold"
+                >
+                  {table.title[@language] || table.title["en"]}
+                </span>
+                <button
+                  :if={@editing_table != {table.id, "title"}}
+                  phx-click="edit_table_field"
+                  phx-value-table_id={table.id}
+                  phx-value-field="title"
+                  class="text-base-content/40 hover:text-base-content transition-colors"
+                  title="Edit title"
+                >
+                  <.icon name="hero-pencil-square" class="h-4 w-4" />
+                </button>
+                <form
+                  :if={@editing_table == {table.id, "title"}}
+                  phx-submit="save_table_field"
+                  class="flex items-center gap-2"
+                >
+                  <input type="hidden" name="table_id" value={table.id} />
+                  <input type="hidden" name="field" value="title" />
+                  <input
+                    name="value"
+                    type="text"
+                    value={table.title[@language] || table.title["en"]}
+                    class="input input-bordered input-sm font-semibold"
+                    autofocus
+                  />
+                  <button type="submit" class="btn btn-xs btn-primary">Save</button>
+                  <button
+                    type="button"
+                    phx-click="cancel_edit_table_field"
+                    class="btn btn-xs btn-ghost"
+                  >
+                    Cancel
+                  </button>
+                </form>
+              </div>
+
+              <%!-- Editable description --%>
+              <div class="mt-1 text-sm text-base-content/60">
+                <div
+                  :if={@editing_table != {table.id, "description"}}
+                  class="flex items-start gap-1"
+                >
+                  <span :if={table.description[@language] || table.description["en"]}>
+                    {table.description[@language] || table.description["en"]}
+                  </span>
+                  <span
+                    :if={!(table.description[@language] || table.description["en"])}
+                    class="italic text-base-content/40"
+                  >
+                    No description
+                  </span>
+                  <button
+                    phx-click="edit_table_field"
+                    phx-value-table_id={table.id}
+                    phx-value-field="description"
+                    class="text-base-content/30 hover:text-base-content/60 transition-colors shrink-0"
+                    title="Edit description"
+                  >
+                    <.icon name="hero-pencil-square" class="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <form
+                  :if={@editing_table == {table.id, "description"}}
+                  phx-submit="save_table_field"
+                  class="flex flex-col gap-2"
+                >
+                  <input type="hidden" name="table_id" value={table.id} />
+                  <input type="hidden" name="field" value="description" />
+                  <textarea
+                    name="value"
+                    class="textarea textarea-bordered textarea-sm text-sm"
+                    rows="3"
+                    autofocus
+                  >{table.description[@language] || table.description["en"]}</textarea>
+                  <div class="flex gap-2">
+                    <button type="submit" class="btn btn-xs btn-primary">Save</button>
+                    <button
+                      type="button"
+                      phx-click="cancel_edit_table_field"
+                      class="btn btn-xs btn-ghost"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <%!-- Variable checkboxes (only when table is enabled) --%>
+          <div :if={table.enabled} id={"variables-#{table.id}"} class="mt-3 ml-7">
+            <div class="flex gap-2 mb-2 text-xs">
+              <button
+                phx-click="select_all_variables"
+                phx-value-table_id={table.id}
+                class="text-primary hover:underline"
+              >
+                all
+              </button>
+              <span class="text-base-content/40">/</span>
+              <button
+                phx-click="deselect_all_variables"
+                phx-value-table_id={table.id}
+                class="text-primary hover:underline"
+              >
+                none
+              </button>
+            </div>
+            <div class="space-y-1">
+              <label
+                :for={{key, label} <- table.headers}
+                class="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm checkbox-primary"
+                  checked={key in table.enabled_headers}
+                  value={key}
+                  phx-click="toggle_variable"
+                  phx-value-table_id={table.id}
+                  phx-value-key={key}
+                />
+                <span class="text-sm">
+                  {label[@language] || label["en"]}
+                </span>
+              </label>
+            </div>
+            <%!-- Per-table variable validation --%>
+            <p :if={table.enabled_headers == []} class="mt-2 text-error text-xs">
+              Select at least one variable.
+            </p>
+          </div>
         </div>
       </div>
-    </main>
+
+      <%!-- Global validation errors --%>
+      <div class="mt-4 space-y-1">
+        <p :if={not has_enabled_table?(@tables)} class="text-error text-sm">
+          Select at least one table.
+        </p>
+      </div>
+    </div>
+
+    <%!-- Bottom action bar --%>
+    <div class="border-t border-base-300 p-4 flex justify-between items-center">
+      <button phx-click="go_back" class="btn btn-ghost">← Back</button>
+      <button
+        id="emit-config-btn"
+        phx-click="emit_config"
+        class={["btn btn-primary", not valid_config?(@tables) && "btn-disabled"]}
+        disabled={not valid_config?(@tables)}
+      >
+        Emit config
+      </button>
+    </div>
   </div>
 </Layouts.app>

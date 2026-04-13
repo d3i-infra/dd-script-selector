@@ -35,3 +35,4 @@ dd_script_selector-*.tar
 npm-debug.log
 /assets/node_modules/
 
+.worktrees/

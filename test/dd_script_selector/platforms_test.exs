@@ -71,6 +71,67 @@ defmodule DdScriptSelector.PlatformsTest do
       names = Enum.map(platforms, & &1.name)
       assert names == ["Amazon", "Netflix", "Youtube"]
     end
+
+    test "returns tables and available_languages from DEFAULT_CONFIG_JSON" do
+      dir = tmp_dir()
+
+      File.write!(Path.join(dir, "myplatform.py"), """
+      \"\"\"My platform.\"\"\"
+
+      DEFAULT_CONFIG_JSON: str = \"\"\"
+      {
+        "tables": [
+          {
+            "id": "t1",
+            "extractor": "extract_t1",
+            "title": {"en": "Table One", "nl": "Tabel Een"},
+            "description": {"en": "Desc.", "nl": "Omschr."},
+            "headers": {
+              "Name": {"en": "Name", "nl": "Naam"},
+              "Date": {"en": "Date", "nl": "Datum"}
+            }
+          }
+        ]
+      }
+      \"\"\"
+      """)
+
+      [platform] = Platforms.list(dir)
+      assert length(platform.tables) == 1
+
+      [table] = platform.tables
+      assert table.id == "t1"
+      assert table.extractor == "extract_t1"
+      assert table.title == %{"en" => "Table One", "nl" => "Tabel Een"}
+      assert table.enabled == true
+      assert Enum.sort(table.enabled_headers) == ["Date", "Name"]
+
+      assert platform.available_languages == ["en", "nl"]
+    end
+
+    test "returns empty tables and languages when DEFAULT_CONFIG_JSON is absent" do
+      dir = tmp_dir()
+      File.write!(Path.join(dir, "simple.py"), "\"\"\"Simple.\"\"\"\n")
+
+      [platform] = Platforms.list(dir)
+      assert platform.tables == []
+      assert platform.available_languages == []
+    end
+
+    test "returns empty tables when config JSON is invalid" do
+      dir = tmp_dir()
+
+      File.write!(Path.join(dir, "broken.py"), """
+      \"\"\"Broken.\"\"\"
+
+      DEFAULT_CONFIG_JSON: str = \"\"\"
+      not valid json
+      \"\"\"
+      """)
+
+      [platform] = Platforms.list(dir)
+      assert platform.tables == []
+    end
   end
 
   describe "list/0" do

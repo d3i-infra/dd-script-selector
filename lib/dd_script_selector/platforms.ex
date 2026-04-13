@@ -8,8 +8,8 @@ defmodule DdScriptSelector.Platforms do
   @doc """
   Lists platforms from the configured platforms directory.
 
-  Returns a list of `%{name: String.t(), doc: String.t() | nil}` maps,
-  sorted alphabetically by filename.
+  Returns a list of platform maps sorted alphabetically by filename.
+  Each map has keys: `:name`, `:doc`, `:tables`, `:available_languages`.
   """
   def list do
     dir = Application.fetch_env!(:dd_script_selector, :platforms_dir)
@@ -17,11 +17,8 @@ defmodule DdScriptSelector.Platforms do
   end
 
   @doc """
-  Lists platforms from the given directory path.
-
-  Returns a list of `%{name: String.t(), doc: String.t() | nil}` maps,
-  sorted alphabetically by filename. Returns `[]` if the directory does not
-  exist or cannot be read.
+  Lists platforms from the given directory path. Returns `[]` if the
+  directory does not exist or cannot be read.
   """
   def list(dir) do
     case File.ls(dir) do
@@ -32,8 +29,10 @@ defmodule DdScriptSelector.Platforms do
         |> Enum.map(fn filename ->
           path = Path.join(dir, filename)
           name = filename |> Path.rootname() |> String.capitalize()
-          doc = extract_doc(path)
-          %{name: name, doc: doc}
+          extracted = PyDocExtractor.extract(path)
+          doc = extract_doc(extracted)
+          {tables, available_languages} = extract_config(extracted)
+          %{name: name, doc: doc, tables: tables, available_languages: available_languages}
         end)
 
       {:error, _} ->
@@ -41,10 +40,48 @@ defmodule DdScriptSelector.Platforms do
     end
   end
 
-  defp extract_doc(path) do
-    case PyDocExtractor.extract(path) do
-      {:error, _} -> nil
-      %{module_doc: doc} -> doc
+  # ---------------------------------------------------------------------------
+  # Private
+  # ---------------------------------------------------------------------------
+
+  defp extract_doc({:error, _}), do: nil
+  defp extract_doc(%{module_doc: doc}), do: doc
+
+  defp extract_config({:error, _}), do: {[], []}
+  defp extract_config(%{config_json: nil}), do: {[], []}
+
+  defp extract_config(%{config_json: json}) do
+    case Jason.decode(json) do
+      {:ok, %{"tables" => raw_tables}} ->
+        tables = Enum.map(raw_tables, &normalize_table/1)
+        {tables, derive_languages(tables)}
+
+      _ ->
+        {[], []}
     end
+  end
+
+  defp normalize_table(raw) do
+    headers = raw["headers"] || %{}
+
+    %{
+      id: raw["id"],
+      extractor: raw["extractor"],
+      title: raw["title"] || %{},
+      description: raw["description"] || %{},
+      headers: headers,
+      extractor_kwargs: raw["extractor_kwargs"] || %{},
+      visualizations: raw["visualizations"] || [],
+      variables: raw["variables"],
+      enabled: true,
+      enabled_headers: headers |> Map.keys() |> Enum.sort()
+    }
+  end
+
+  defp derive_languages([]), do: []
+
+  defp derive_languages([first | _]) do
+    keys = Map.keys(first.title)
+    (["en"] ++ Enum.sort(keys -- ["en"])) |> Enum.uniq()
   end
 end

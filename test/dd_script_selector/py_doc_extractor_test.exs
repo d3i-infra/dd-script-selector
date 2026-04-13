@@ -148,6 +148,42 @@ defmodule DdScriptSelector.PyDocExtractorTest do
   # extract/1
   # ---------------------------------------------------------------------------
 
+  # ---------------------------------------------------------------------------
+  # config_json
+  # ---------------------------------------------------------------------------
+
+  describe "parse/1 - config_json" do
+    test "extracts the triple-quoted DEFAULT_CONFIG_JSON string" do
+      python = """
+      \"\"\"Module doc.\"\"\"
+
+      DEFAULT_CONFIG_JSON: str = \"\"\"
+      {\"tables\": [{\"id\": \"t1\"}]}
+      \"\"\"
+      """
+
+      assert PyDocExtractor.parse(python).config_json == "{\"tables\": [{\"id\": \"t1\"}]}"
+    end
+
+    test "returns nil when DEFAULT_CONFIG_JSON is absent" do
+      assert PyDocExtractor.parse("x = 1\n").config_json == nil
+    end
+
+    test "trims surrounding whitespace from the extracted JSON string" do
+      python = """
+      DEFAULT_CONFIG_JSON: str = \"\"\"
+        {\"tables\": []}
+      \"\"\"
+      """
+
+      assert PyDocExtractor.parse(python).config_json == "{\"tables\": []}"
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # extract/1
+  # ---------------------------------------------------------------------------
+
   describe "extract/1" do
     test "reads and parses a real file" do
       path = Path.join(System.tmp_dir!(), "test_py_doc_#{System.unique_integer([:positive])}.py")

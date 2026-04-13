@@ -20,7 +20,8 @@ defmodule DdScriptSelector.PyDocExtractor do
   def parse(content) do
     %{
       module_doc: extract_module_doc(content),
-      functions: extract_functions(content)
+      functions: extract_functions(content),
+      config_json: extract_config_json(content)
     }
   end
 
@@ -51,6 +52,15 @@ defmodule DdScriptSelector.PyDocExtractor do
   defp extract_function_doc(body) do
     case Regex.run(~r/\A\s*(\"\"\"|''')([\s\S]*?)\1/s, body) do
       [_, _, doc] -> String.trim(doc)
+      _ -> nil
+    end
+  end
+
+  # --- Config JSON extraction ---
+
+  defp extract_config_json(content) do
+    case Regex.run(~r/DEFAULT_CONFIG_JSON[^=\n]*=\s*"""([\s\S]*?)"""/s, content) do
+      [_, json] -> String.trim(json)
       _ -> nil
     end
   end
