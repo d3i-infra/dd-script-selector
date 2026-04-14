@@ -3,6 +3,8 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
   alias DdScriptSelector.Platforms
 
+  @builder_base "http://localhost:8000"
+
   def mount(_params, _session, socket) do
     platforms = Platforms.list()
 
@@ -19,6 +21,11 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       |> assign(:title, "")
       |> assign(:editing_title, false)
       |> assign(:editing_table, nil)
+      |> assign(:build_id, nil)
+      |> assign(:build_status, nil)
+      |> assign(:build_logs, [])
+      |> assign(:build_error, nil)
+      |> assign(:poll_retries, 0)
 
     {:ok, socket}
   end
@@ -164,9 +171,105 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
   def handle_event("emit_config", _params, socket) do
     if valid_config?(socket.assigns.tables) do
-      json = socket.assigns.tables |> build_config() |> Jason.encode!()
-      IO.inspect(json)
-      {:noreply, push_event(socket, "config-ready", %{"json" => json})}
+      config_json = socket.assigns.tables |> build_config() |> Jason.encode!()
+
+      result =
+        Req.post(
+          @builder_base <> "/build",
+          [
+            {:json,
+             %{
+               config: config_json,
+               config_path: "packages/python/port/port_config.json",
+               output_dir: "releases"
+             }}
+            | builder_req_opts()
+          ]
+        )
+
+      case result do
+        {:ok, %{status: 200, body: %{"build_id" => build_id}}} ->
+          Process.send_after(self(), :poll_build, 2_000)
+
+          {:noreply,
+           socket
+           |> assign(:build_id, build_id)
+           |> assign(:build_status, "queued")
+           |> assign(:build_logs, [])
+           |> assign(:build_error, nil)
+           |> assign(:poll_retries, 0)}
+
+        _ ->
+          {:noreply,
+           socket
+           |> assign(:build_status, "error")
+           |> assign(:build_error, "Builder API unavailable")}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(:poll_build, socket) do
+    build_id = socket.assigns.build_id
+
+    case Req.get(@builder_base <> "/status/#{build_id}", builder_req_opts()) do
+      {:ok, %{status: 200, body: body}} ->
+        status = body["status"]
+        logs = body["logs"] || []
+
+        socket =
+          socket
+          |> assign(:build_status, status)
+          |> assign(:build_logs, logs)
+          |> assign(:poll_retries, 0)
+
+        socket =
+          case status do
+            s when s in ["queued", "running"] ->
+              Process.send_after(self(), :poll_build, 2_000)
+              socket
+
+            "done" ->
+              Process.send_after(self(), {:reset_build, build_id}, 2_000)
+
+              push_event(socket, "trigger-download-url", %{
+                path: "/builds/#{build_id}/download"
+              })
+
+            "error" ->
+              assign(socket, :build_error, body["error"] || "Unknown build error")
+
+            _ ->
+              socket
+          end
+
+        {:noreply, socket}
+
+      {:error, _} ->
+        retries = socket.assigns.poll_retries + 1
+
+        if retries > 3 do
+          {:noreply,
+           socket
+           |> assign(:build_status, "error")
+           |> assign(:build_error, "Lost connection to builder API")}
+        else
+          Process.send_after(self(), :poll_build, 2_000)
+          {:noreply, assign(socket, :poll_retries, retries)}
+        end
+    end
+  end
+
+  def handle_info({:reset_build, build_id}, socket) do
+    if socket.assigns.build_id == build_id do
+      {:noreply,
+       socket
+       |> assign(:build_id, nil)
+       |> assign(:build_status, nil)
+       |> assign(:build_logs, [])
+       |> assign(:build_error, nil)
+       |> assign(:poll_retries, 0)}
     else
       {:noreply, socket}
     end
@@ -175,6 +278,8 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   # ---------------------------------------------------------------------------
   # Private
   # ---------------------------------------------------------------------------
+
+  defp builder_req_opts, do: Application.get_env(:dd_script_selector, :builder_req_opts, [])
 
   defp valid_config?(tables) do
     has_enabled_table?(tables) and all_enabled_tables_have_variables?(tables)
@@ -210,6 +315,6 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         }
       end)
 
-    %{"tables" => enabled_tables}
+    %{"platform" => "instagram", "tables" => enabled_tables}
   end
 end

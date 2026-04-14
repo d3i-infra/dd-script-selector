@@ -266,17 +266,73 @@
       </div>
     </div>
 
+    <%!-- Build log panel --%>
+    <div
+      :if={@build_status != nil}
+      id="build-log-panel"
+      class="border-t border-base-300 bg-base-200 max-h-48 overflow-y-auto p-4 font-mono text-xs"
+      phx-hook=".AutoScroll"
+    >
+      <p :for={line <- @build_logs} class="leading-5">{line}</p>
+    </div>
+
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".AutoScroll">
+      export default {
+        updated() {
+          this.el.scrollTop = this.el.scrollHeight
+        }
+      }
+    </script>
+
     <%!-- Bottom action bar --%>
-    <div class="border-t border-base-300 p-4 flex justify-between items-center">
-      <button phx-click="go_back" class="btn btn-ghost">← Back</button>
-      <button
-        id="emit-config-btn"
-        phx-click="emit_config"
-        class={["btn btn-primary", not valid_config?(@tables) && "btn-disabled"]}
-        disabled={not valid_config?(@tables)}
+    <div class="border-t border-base-300 p-4">
+      <%!-- Status banners --%>
+      <div
+        :if={@build_status == "done"}
+        id="build-status-banner"
+        class="mb-3 flex items-center gap-2 rounded-lg bg-success/10 px-4 py-2 text-success text-sm font-medium"
       >
-        Emit config
-      </button>
+        <.icon name="hero-check-circle" class="h-5 w-5 shrink-0" />
+        Build complete — downloading…
+      </div>
+      <div
+        :if={@build_status == "error"}
+        id="build-status-banner"
+        class="mb-3 flex items-center gap-2 rounded-lg bg-error/10 px-4 py-2 text-error text-sm font-medium"
+      >
+        <.icon name="hero-x-circle" class="h-5 w-5 shrink-0" />
+        Build failed: {@build_error}
+      </div>
+
+      <div class="flex justify-between items-center">
+        <button
+          phx-click="go_back"
+          class={["btn btn-ghost", @build_status in ["queued", "running"] && "btn-disabled"]}
+          disabled={@build_status in ["queued", "running"]}
+        >
+          ← Back
+        </button>
+
+        <button
+          :if={@build_status not in ["queued", "running"]}
+          id="emit-config-btn"
+          phx-click="emit_config"
+          class={["btn btn-primary", not valid_config?(@tables) && "btn-disabled"]}
+          disabled={not valid_config?(@tables)}
+        >
+          Emit config
+        </button>
+
+        <button
+          :if={@build_status in ["queued", "running"]}
+          id="build-spinner"
+          class="btn btn-primary btn-disabled"
+          disabled
+        >
+          <span class="loading loading-spinner loading-sm"></span>
+          Building…
+        </button>
+      </div>
     </div>
   </div>
 </Layouts.app>

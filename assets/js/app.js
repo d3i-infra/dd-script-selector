@@ -46,6 +46,17 @@ window.addEventListener("phx:trigger-download", ({detail: {filename, content}}) 
   a.click()
 })
 
+// Trigger a file download via a server-push URL path.
+// push_event("trigger-download-url", %{path: "/builds/id/download"})
+window.addEventListener("phx:trigger-download-url", ({detail: {path}}) => {
+  const a = document.createElement("a")
+  a.href = path
+  a.download = ""
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+})
+
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 
