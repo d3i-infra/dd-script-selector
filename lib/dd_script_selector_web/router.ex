@@ -19,6 +19,7 @@ defmodule DdScriptSelectorWeb.Router do
 
     live "/", HomeLive
     live "/select", ScriptSelectorLive
+    get "/builds/:id/download", BuildController, :download
   end
 
   # Other scopes may use custom stacks.
