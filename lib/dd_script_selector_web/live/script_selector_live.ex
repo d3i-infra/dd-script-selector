@@ -170,6 +170,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   def handle_event("emit_config", _params, socket) do
     if valid_config?(socket.assigns.tables) do
       config_json = socket.assigns.tables |> build_config(socket.assigns.selected) |> Jason.encode!()
+      documentation = build_documentation(socket.assigns.tables, socket.assigns.selected_platform.platform_info)
 
       result =
         Req.post(
@@ -179,7 +180,8 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
              %{
                config: config_json,
                config_path: "packages/python/port/port_config.json",
-               output_dir: "releases"
+               output_dir: "releases",
+               documentation: documentation
              }}
             | builder_req_opts()
           ]
@@ -314,5 +316,25 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       end)
 
     %{"platform" => platform, "tables" => enabled_tables}
+  end
+
+  defp build_documentation(tables, platform_info) do
+    enabled_tables =
+      tables
+      |> Enum.filter(& &1.enabled)
+      |> Enum.map(fn table ->
+        filtered_headers =
+          Map.filter(table.headers, fn {key, _} -> key in table.enabled_headers end)
+
+        %{
+          "id" => table.id,
+          "title" => table.title,
+          "description" => table.description,
+          "documentation" => table.documentation,
+          "variables" => filtered_headers
+        }
+      end)
+
+    %{"platform_info" => platform_info, "tables" => enabled_tables}
   end
 end
