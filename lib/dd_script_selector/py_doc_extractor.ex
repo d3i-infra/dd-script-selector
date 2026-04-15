@@ -5,8 +5,9 @@ defmodule DdScriptSelector.PyDocExtractor do
 
   @doc """
   Reads a Python file and returns a map with:
-  - `:module_doc` - the module-level docstring, or nil
+  - `:platform_info_json` - the raw JSON string from `PLATFORM_INFO_JSON`, or nil
   - `:functions`  - list of `%{name: string, doc: string | nil}`
+  - `:table_config_json` - the raw JSON string from `DEFAULT_TABLE_CONFIG_JSON`, or nil
   """
   def extract(file_path) do
     with {:ok, content} <- File.read(file_path) do
@@ -19,17 +20,17 @@ defmodule DdScriptSelector.PyDocExtractor do
   """
   def parse(content) do
     %{
-      module_doc: extract_module_doc(content),
+      platform_info_json: extract_platform_info_json(content),
       functions: extract_functions(content),
-      config_json: extract_config_json(content)
+      table_config_json: extract_table_config_json(content)
     }
   end
 
-  # --- Module docstring ---
+  # --- Platform info JSON extraction ---
 
-  defp extract_module_doc(content) do
-    case Regex.run(~r/\A\s*(\"\"\"|''')([\s\S]*?)\1/s, content) do
-      [_, _, doc] -> String.trim(doc)
+  defp extract_platform_info_json(content) do
+    case Regex.run(~r/PLATFORM_INFO_JSON[^=\n]*=\s*"""([\s\S]*?)"""/s, content) do
+      [_, json] -> String.trim(json)
       _ -> nil
     end
   end
@@ -56,10 +57,10 @@ defmodule DdScriptSelector.PyDocExtractor do
     end
   end
 
-  # --- Config JSON extraction ---
+  # --- Table config JSON extraction ---
 
-  defp extract_config_json(content) do
-    case Regex.run(~r/DEFAULT_CONFIG_JSON[^=\n]*=\s*"""([\s\S]*?)"""/s, content) do
+  defp extract_table_config_json(content) do
+    case Regex.run(~r/DEFAULT_TABLE_CONFIG_JSON[^=\n]*=\s*"""([\s\S]*?)"""/s, content) do
       [_, json] -> String.trim(json)
       _ -> nil
     end

@@ -19,13 +19,13 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       |> assign(:language, "en")
       |> assign(:available_languages, [])
       |> assign(:title, "")
-      |> assign(:editing_title, false)
       |> assign(:editing_table, nil)
       |> assign(:build_id, nil)
       |> assign(:build_status, nil)
       |> assign(:build_logs, [])
       |> assign(:build_error, nil)
       |> assign(:poll_retries, 0)
+      |> assign(:expanded_docs, MapSet.new())
 
     {:ok, socket}
   end
@@ -57,20 +57,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     {:noreply,
      socket
      |> assign(:step, :select_platform)
-     |> assign(:editing_title, false)
      |> assign(:editing_table, nil)}
-  end
-
-  def handle_event("edit_title", _params, socket) do
-    {:noreply, assign(socket, :editing_title, true)}
-  end
-
-  def handle_event("save_title", %{"title" => title}, socket) do
-    {:noreply, socket |> assign(:title, title) |> assign(:editing_title, false)}
-  end
-
-  def handle_event("cancel_edit_title", _params, socket) do
-    {:noreply, assign(socket, :editing_title, false)}
   end
 
   def handle_event("edit_table_field", %{"table_id" => table_id, "field" => field}, socket) do
@@ -169,9 +156,20 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     {:noreply, assign(socket, :language, lang)}
   end
 
+  def handle_event("toggle_doc", %{"id" => id}, socket) do
+    expanded_docs =
+      if MapSet.member?(socket.assigns.expanded_docs, id) do
+        MapSet.delete(socket.assigns.expanded_docs, id)
+      else
+        MapSet.put(socket.assigns.expanded_docs, id)
+      end
+
+    {:noreply, assign(socket, :expanded_docs, expanded_docs)}
+  end
+
   def handle_event("emit_config", _params, socket) do
     if valid_config?(socket.assigns.tables) do
-      config_json = socket.assigns.tables |> build_config() |> Jason.encode!()
+      config_json = socket.assigns.tables |> build_config(socket.assigns.selected) |> Jason.encode!()
 
       result =
         Req.post(
@@ -295,7 +293,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     |> Enum.all?(fn t -> length(t.enabled_headers) > 0 end)
   end
 
-  defp build_config(tables) do
+  defp build_config(tables, platform) do
     enabled_tables =
       tables
       |> Enum.filter(& &1.enabled)
@@ -315,6 +313,6 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         }
       end)
 
-    %{"platform" => "instagram", "tables" => enabled_tables}
+    %{"platform" => platform, "tables" => enabled_tables}
   end
 end

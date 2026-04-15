@@ -2,7 +2,10 @@
   <%!-- Step 1: Platform Selection --%>
   <div :if={@step == :select_platform} class="flex flex-col h-[calc(100vh-4rem)]">
     <div class="flex-1 overflow-y-auto p-8">
-      <h1 class="text-2xl font-bold mb-6">Select a Platform</h1>
+      <h1 class="text-2xl font-bold mb-2">Select a Platform</h1>
+      <p class="text-base-content/60 text-sm mb-6">
+        Choose the platform you want to create a data-donation script for. Each platform comes with a set of pre-configured data tables and variables that you can customise in the next step.
+      </p>
       <ul id="platform-list" phx-update="stream" class="space-y-2 max-w-lg">
         <li
           :for={platform <- @platforms}
@@ -40,42 +43,31 @@
   <%!-- Step 2: Configuration --%>
   <div :if={@step == :configure} class="flex flex-col h-[calc(100vh-4rem)]">
     <div class="flex-1 overflow-y-auto p-8">
-      <%!-- Editable title --%>
-      <div class="flex items-center gap-2 mb-2">
-        <h1 :if={not @editing_title} class="text-2xl font-bold">{@title}</h1>
-        <button
-          :if={not @editing_title}
-          phx-click="edit_title"
-          class="text-base-content/40 hover:text-base-content transition-colors"
-          title="Edit title"
-        >
-          <.icon name="hero-pencil-square" class="h-5 w-5" />
-        </button>
-        <form :if={@editing_title} phx-submit="save_title" class="flex items-center gap-2">
-          <input
-            name="title"
-            type="text"
-            value={@title}
-            class="input input-bordered input-sm font-bold text-lg"
-            autofocus
-          />
-          <button type="submit" class="btn btn-xs btn-primary">Save</button>
-          <button type="button" phx-click="cancel_edit_title" class="btn btn-xs btn-ghost">
-            Cancel
-          </button>
-        </form>
-      </div>
-
-      <%!-- Platform description --%>
-      <p class={[
-        "mb-6 whitespace-pre-wrap text-sm",
-        if(is_nil(@selected_platform.doc),
-          do: "text-base-content/50 italic",
-          else: "text-base-content/60"
-        )
-      ]}>
-        {@selected_platform.doc || "No description available."}
+      <h1 class="text-2xl font-bold mb-2">Create your {@title} data donation flow</h1>
+      <p class="text-base-content/60 text-sm mb-4">
+        Enable or disable tables to control what data gets extracted, then select the variables you want to include per table. You can also edit table titles and descriptions to tailor the script to your study.
       </p>
+      <p class="text-base-content/60 text-sm mb-4">
+        The platform info below shows what file types and languages of the DDP the data donation flow builder supports supports. Make sure these DDP characteristics matches the characteristics of the DDPs your participants will be requesting.
+      </p>
+
+      <%!-- Platform info --%>
+      <div :if={not is_nil(@selected_platform.platform_info)} class="mb-6 space-y-1 text-sm text-base-content/60">
+        <p :if={@selected_platform.platform_info["filetypes"]}>
+          <span class="font-medium">Supported DDP file types:</span>
+          {Enum.join(@selected_platform.platform_info["filetypes"], ", ")}
+        </p>
+        <p :if={@selected_platform.platform_info["languages"]}>
+          <span class="font-medium">Supported DDP languages:</span>
+          {Enum.join(@selected_platform.platform_info["languages"], ", ")}
+        </p>
+        <p :if={@selected_platform.platform_info["description"]} class="pt-1 text-base-content/50">
+          {@selected_platform.platform_info["description"]}
+        </p>
+      </div>
+      <div :if={is_nil(@selected_platform.platform_info)} class="mb-6 text-sm text-base-content/50 italic">
+        No description available.
+      </div>
 
       <%!-- Language toggle --%>
       <div :if={length(@available_languages) > 1} id="language-toggle" class="flex gap-1 mb-6">
@@ -254,6 +246,54 @@
             <p :if={table.enabled_headers == []} class="mt-2 text-error text-xs">
               Select at least one variable.
             </p>
+          </div>
+
+          <%!-- Documentation toggle --%>
+          <div :if={not is_nil(table.documentation)} class="mt-3 ml-7 border-t border-base-300 pt-3">
+            <button
+              phx-click="toggle_doc"
+              phx-value-id={table.id}
+              class="flex items-center gap-1 text-xs text-base-content/50 hover:text-base-content transition-colors"
+            >
+              <.icon
+                name={if MapSet.member?(@expanded_docs, table.id), do: "hero-chevron-down", else: "hero-chevron-right"}
+                class="h-3.5 w-3.5"
+              />
+              Click here to read the documentation of this table
+            </button>
+
+            <div :if={MapSet.member?(@expanded_docs, table.id)} class="mt-3 space-y-3 text-sm">
+              <%!-- Summary --%>
+              <p :if={table.documentation["summary"]} class="text-base-content/70 leading-relaxed">
+                {table.documentation["summary"]}
+              </p>
+
+              <%!-- Source file --%>
+              <div :if={table.documentation["source_file"]} class="flex items-center gap-2">
+                <span class="text-base-content/40 text-xs">Source file</span>
+                <span class="font-mono text-xs bg-base-200 px-2 py-0.5 rounded">
+                  {table.documentation["source_file"]}
+                </span>
+              </div>
+
+              <%!-- Columns --%>
+              <div :if={table.documentation["columns"] != nil and map_size(table.documentation["columns"]) > 0}>
+                <p class="text-xs font-medium text-base-content/50 uppercase tracking-wide mb-2">Columns</p>
+                <div class="space-y-1">
+                  <div
+                    :for={{col_name, col_desc} <- table.documentation["columns"]}
+                    class="grid grid-cols-[auto_1fr] gap-x-3 items-start"
+                  >
+                    <span class="font-mono text-xs bg-base-200 px-1.5 py-0.5 rounded text-base-content/80 whitespace-nowrap">
+                      {col_name}
+                    </span>
+                    <span class="text-xs text-base-content/60 leading-relaxed pt-0.5">
+                      {col_desc}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

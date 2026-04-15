@@ -9,7 +9,7 @@ defmodule DdScriptSelector.Platforms do
   Lists platforms from the configured platforms directory.
 
   Returns a list of platform maps sorted alphabetically by filename.
-  Each map has keys: `:name`, `:doc`, `:tables`, `:available_languages`.
+  Each map has keys: `:name`, `:platform_info`, `:tables`, `:available_languages`.
   """
   def list do
     dir = Application.fetch_env!(:dd_script_selector, :platforms_dir)
@@ -30,9 +30,9 @@ defmodule DdScriptSelector.Platforms do
           path = Path.join(dir, filename)
           name = filename |> Path.rootname() |> String.capitalize()
           extracted = PyDocExtractor.extract(path)
-          doc = extract_doc(extracted)
-          {tables, available_languages} = extract_config(extracted)
-          %{name: name, doc: doc, tables: tables, available_languages: available_languages}
+          platform_info = extract_platform_info(extracted)
+          {tables, available_languages} = extract_table_config(extracted)
+          %{name: name, platform_info: platform_info, tables: tables, available_languages: available_languages}
         end)
 
       {:error, _} ->
@@ -44,13 +44,20 @@ defmodule DdScriptSelector.Platforms do
   # Private
   # ---------------------------------------------------------------------------
 
-  defp extract_doc({:error, _}), do: nil
-  defp extract_doc(%{module_doc: doc}), do: doc
+  defp extract_platform_info({:error, _}), do: nil
+  defp extract_platform_info(%{platform_info_json: nil}), do: nil
 
-  defp extract_config({:error, _}), do: {[], []}
-  defp extract_config(%{config_json: nil}), do: {[], []}
+  defp extract_platform_info(%{platform_info_json: json}) do
+    case Jason.decode(json) do
+      {:ok, info} -> info
+      _ -> nil
+    end
+  end
 
-  defp extract_config(%{config_json: json}) do
+  defp extract_table_config({:error, _}), do: {[], []}
+  defp extract_table_config(%{table_config_json: nil}), do: {[], []}
+
+  defp extract_table_config(%{table_config_json: json}) do
     case Jason.decode(json) do
       {:ok, %{"tables" => raw_tables}} ->
         tables = Enum.map(raw_tables, &normalize_table/1)
@@ -69,6 +76,7 @@ defmodule DdScriptSelector.Platforms do
       extractor: raw["extractor"],
       title: raw["title"] || %{},
       description: raw["description"] || %{},
+      documentation: raw["documentation"],
       headers: headers,
       extractor_kwargs: raw["extractor_kwargs"] || %{},
       visualizations: raw["visualizations"] || [],
