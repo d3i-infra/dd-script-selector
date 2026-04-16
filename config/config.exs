@@ -7,10 +7,6 @@
 # General application configuration
 import Config
 
-config :dd_script_selector,
-  ecto_repos: [DdScriptSelector.Repo],
-  generators: [timestamp_type: :utc_datetime]
-
 # Configure the endpoint
 config :dd_script_selector, DdScriptSelectorWeb.Endpoint,
   url: [host: "localhost"],

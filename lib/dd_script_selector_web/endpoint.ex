@@ -33,7 +33,6 @@ defmodule DdScriptSelectorWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :dd_script_selector
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,

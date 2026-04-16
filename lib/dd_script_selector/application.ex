@@ -9,7 +9,6 @@ defmodule DdScriptSelector.Application do
   def start(_type, _args) do
     children = [
       DdScriptSelectorWeb.Telemetry,
-      DdScriptSelector.Repo,
       {DNSCluster,
        query: Application.get_env(:dd_script_selector, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: DdScriptSelector.PubSub},
