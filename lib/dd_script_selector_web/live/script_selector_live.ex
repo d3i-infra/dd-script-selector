@@ -179,7 +179,6 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
             {:json,
              %{
                config: config_json,
-               config_path: "packages/python/port/port_config.json",
                output_dir: "releases",
                documentation: documentation
              }}
