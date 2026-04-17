@@ -51,7 +51,7 @@ if config_env() == :prod do
 
   config :dd_script_selector, :platforms_dir, platforms_dir
 
-  config :dd_script_selector, :builder_base, "http://localhost:8000"
+  config :dd_script_selector, :builder_base, System.get_env("BUILDER_BASE", "http://localhost:8000")
 
   dev_mode = System.get_env("DEV_MODE") == "true"
 

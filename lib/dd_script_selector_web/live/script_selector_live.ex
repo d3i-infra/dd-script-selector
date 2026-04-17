@@ -3,7 +3,6 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
   alias DdScriptSelector.Platforms
 
-  @builder_base Application.compile_env(:dd_script_selector, :builder_base, "http://localhost:8000")
 
   def mount(_params, _session, socket) do
     platforms = Platforms.list()
@@ -174,7 +173,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
       result =
         Req.post(
-          @builder_base <> "/build",
+          builder_base() <> "/build",
           [
             {:json,
              %{
@@ -212,7 +211,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   def handle_info(:poll_build, socket) do
     build_id = socket.assigns.build_id
 
-    case Req.get(@builder_base <> "/status/#{build_id}", builder_req_opts()) do
+    case Req.get(builder_base() <> "/status/#{build_id}", builder_req_opts()) do
       {:ok, %{status: 200, body: body}} ->
         status = body["status"]
         logs = body["logs"] || []
@@ -278,6 +277,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   # Private
   # ---------------------------------------------------------------------------
 
+  defp builder_base, do: Application.get_env(:dd_script_selector, :builder_base, "http://localhost:8000")
   defp builder_req_opts, do: Application.get_env(:dd_script_selector, :builder_req_opts, [])
 
   defp valid_config?(tables) do
