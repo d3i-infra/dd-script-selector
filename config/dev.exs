@@ -83,3 +83,5 @@ config :swoosh, :api_client, false
 
 config :dd_script_selector, :platforms_dir,
   Path.expand("../../data-donation-task/packages/python/port/platforms", __DIR__)
+
+config :dd_script_selector, :builder_base, "http://localhost:8000"

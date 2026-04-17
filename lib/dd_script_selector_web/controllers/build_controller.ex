@@ -1,7 +1,7 @@
 defmodule DdScriptSelectorWeb.BuildController do
   use DdScriptSelectorWeb, :controller
 
-  @builder_base "http://localhost:8000"
+  @builder_base Application.compile_env(:dd_script_selector, :builder_base, "http://localhost:8000")
 
   def download(conn, %{"id" => id}) do
     case Req.get(@builder_base <> "/download/#{id}",

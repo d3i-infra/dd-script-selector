@@ -3,7 +3,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
   alias DdScriptSelector.Platforms
 
-  @builder_base "http://localhost:8000"
+  @builder_base Application.compile_env(:dd_script_selector, :builder_base, "http://localhost:8000")
 
   def mount(_params, _session, socket) do
     platforms = Platforms.list()

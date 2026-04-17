@@ -13,7 +13,7 @@ defmodule DdScriptSelector.Platforms do
   """
   def list do
     dir = Application.fetch_env!(:dd_script_selector, :platforms_dir)
-    list(dir)
+    list(dir) 
   end
 
   @doc """

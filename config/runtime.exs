@@ -40,17 +40,23 @@ if config_env() == :prod do
 
   config :dd_script_selector, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
-  platforms_dir =
+  platforms_base =
     System.get_env("PLATFORMS_DIR") ||
       raise """
       environment variable PLATFORMS_DIR is missing.
-      Set it to the directory containing the Python platform scripts.
+      Set it to the base directory (the path will be extended with /packages/python/port/platforms).
       """
+
+  platforms_dir = Path.join(platforms_base, "packages/python/port/platforms")
 
   config :dd_script_selector, :platforms_dir, platforms_dir
 
+  config :dd_script_selector, :builder_base, "http://localhost:8000"
+
+  dev_mode = System.get_env("DEV_MODE") == "true"
+
   config :dd_script_selector, DdScriptSelectorWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
+    url: [host: host, port: (if dev_mode, do: 4000, else: 443), scheme: (if dev_mode, do: "http", else: "https")],
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
