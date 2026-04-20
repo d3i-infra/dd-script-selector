@@ -1,10 +1,11 @@
 <Layouts.app flash={@flash}>
   <%!-- Step 1: Platform Selection --%>
-  <div :if={@step == :select_platform} class="flex flex-col h-[calc(100vh-4rem)]">
-    <div class="flex-1 overflow-y-auto p-8">
-      <h1 class="text-2xl font-bold mb-2">Select a Platform</h1>
-      <p class="text-base-content/60 text-sm mb-6">
-        Choose the platform you want to create a data-donation script for. Each platform comes with a set of pre-configured data tables and variables that you can customise in the next step.
+  <div :if={@step == :select_platform}>
+    <div class="p-8 pb-24">
+      <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Select a platform</h1>
+      <p class="text-sm mb-6" style="color: #6a6a6a;">
+        Choose the platform whose data download package your participants will share.
+        Each platform comes with pre-configured data tables and variables you can customise in the next step.
       </p>
       <ul id="platform-list" phx-update="stream" class="space-y-2 max-w-lg">
         <li
@@ -12,7 +13,7 @@
           id={"platform-#{platform.name}"}
         >
           <label class={[
-            "flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors border",
+            "flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors border font-medium",
             @selected == platform.name && "bg-primary text-primary-content border-primary",
             @selected != platform.name && "border-base-300 hover:bg-base-200"
           ]}>
@@ -29,7 +30,7 @@
       </ul>
     </div>
 
-    <div class="border-t border-base-300 p-4 flex justify-end">
+    <div class="sticky bottom-0 bg-base-100 border-t border-base-300 p-4 flex justify-end">
       <button
         phx-click="next_step"
         class={["btn btn-primary", is_nil(@selected) && "btn-disabled"]}
@@ -41,14 +42,16 @@
   </div>
 
   <%!-- Step 2: Configuration --%>
-  <div :if={@step == :configure} class="flex flex-col h-[calc(100vh-4rem)]">
-    <div class="flex-1 overflow-y-auto p-8">
-      <h1 class="text-2xl font-bold mb-2">Create your {@title} data donation flow</h1>
-      <p class="text-base-content/60 text-sm mb-4">
-        Enable or disable tables to control what data gets extracted, then select the variables you want to include per table. You can also edit table titles and descriptions to tailor the script to your study.
+  <div :if={@step == :configure}>
+    <div class="p-8 pb-24">
+      <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Configure your {@title} script</h1>
+      <p class="text-sm mb-3" style="color: #6a6a6a;">
+        Enable or disable tables to control what data gets extracted, then select the variables to include per table.
+        You can also edit table titles and descriptions to tailor the script to your study.
       </p>
-      <p class="text-base-content/60 text-sm mb-4">
-        The platform info below shows what file types and languages of the DDP the data donation flow builder supports supports. Make sure these DDP characteristics matches the characteristics of the DDPs your participants will be requesting.
+      <p class="text-sm mb-4" style="color: #6a6a6a;">
+        The platform info below lists the DDP file types and languages this script supports.
+        Make sure these match the data download packages your participants will be requesting.
       </p>
 
       <%!-- Platform info --%>
@@ -325,7 +328,7 @@
     </script>
 
     <%!-- Bottom action bar --%>
-    <div class="border-t border-base-300 p-4">
+    <div class="sticky bottom-0 bg-base-100 border-t border-base-300 p-4">
       <%!-- Status banners --%>
       <div
         :if={@build_status == "done"}
@@ -360,7 +363,7 @@
           class={["btn btn-primary", not valid_config?(@tables) && "btn-disabled"]}
           disabled={not valid_config?(@tables)}
         >
-          Emit config
+          Download script
         </button>
 
         <button

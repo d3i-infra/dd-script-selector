@@ -1,12 +1,11 @@
 <Layouts.app flash={@flash}>
-  <section id="hero" class="py-16 text-center">
-    <h1 class="text-4xl font-bold tracking-tight">
-      Build your data donation script
+  <section id="hero" class="py-14 text-center max-w-2xl mx-auto px-4">
+    <h1 class="text-4xl font-bold tracking-tight" style="color: #252a34;">
+      Configure a data donation script
     </h1>
-    <p class="mt-4 text-lg text-base-content/70 max-w-prose mx-auto">
-      Configure your script using a simple form. We'll build a custom
-      single-page application from your configuration — ready to download
-      and deploy.
+    <p class="mt-4 text-lg max-w-prose mx-auto" style="color: #6a6a6a;">
+      Our ready-made scripts handle the technical details of extracting research-relevant data
+      from a platform's data download package — so you can focus on your study, not the file format.
     </p>
     <div class="mt-8">
       <.link navigate={~p"/select"} class="btn btn-primary btn-lg">
@@ -15,22 +14,53 @@
     </div>
   </section>
 
-  <section id="steps" class="py-12">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 text-center">
-      <div id="step-configure">
+  <section id="platforms" class="py-8 max-w-2xl mx-auto px-4">
+    <h2 class="text-center text-sm font-semibold uppercase tracking-widest mb-6" style="color: #6a6a6a;">
+      Available platforms
+    </h2>
+    <div class="flex flex-wrap justify-center gap-3 text-sm font-medium" style="color: #50545d;">
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">Instagram</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">TikTok</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">Netflix</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">WhatsApp</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">Facebook</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">YouTube</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">ChatGPT</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">LinkedIn</span>
+      <span class="px-3 py-1 rounded-full bg-base-200 border border-base-300">X / Twitter</span>
+    </div>
+  </section>
+
+  <section id="steps" class="py-10 max-w-2xl mx-auto px-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+      <div>
         <div class="text-3xl font-bold text-primary mb-2">1</div>
-        <h2 class="text-lg font-semibold">Configure</h2>
-        <p class="mt-2 text-base-content/70">
-          Fill in the form to specify your script's behaviour and settings.
+        <h3 class="text-base font-semibold" style="color: #252a34;">Select a platform</h3>
+        <p class="mt-2 text-sm" style="color: #6a6a6a;">
+          Pick the platform whose data download package your participants will share.
         </p>
       </div>
-      <div id="step-download">
+      <div>
         <div class="text-3xl font-bold text-primary mb-2">2</div>
-        <h2 class="text-lg font-semibold">Download</h2>
-        <p class="mt-2 text-base-content/70">
-          Download your configured SPA as a zip file, ready to deploy.
+        <h3 class="text-base font-semibold" style="color: #252a34;">Configure</h3>
+        <p class="mt-2 text-sm" style="color: #6a6a6a;">
+          Choose which data tables and variables to include, and tailor the labels for your study.
+        </p>
+      </div>
+      <div>
+        <div class="text-3xl font-bold text-primary mb-2">3</div>
+        <h3 class="text-base font-semibold" style="color: #252a34;">Download</h3>
+        <p class="mt-2 text-sm" style="color: #6a6a6a;">
+          Download your configured script as a zip file, ready to deploy in your data donation study.
         </p>
       </div>
     </div>
+  </section>
+
+  <section id="contact" class="py-8 text-center">
+    <p class="text-sm" style="color: #6a6a6a;">
+      Need a different platform or a custom adaptation?
+      <a href="mailto:DataDonation@uu.nl" class="text-primary font-medium hover:underline">Contact us</a>.
+    </p>
   </section>
 </Layouts.app>
