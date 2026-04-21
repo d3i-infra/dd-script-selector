@@ -4,42 +4,6 @@ defmodule DdScriptSelector.PyDocExtractorTest do
   alias DdScriptSelector.PyDocExtractor
 
   # ---------------------------------------------------------------------------
-  # module_doc
-  # ---------------------------------------------------------------------------
-
-  describe "parse/1 - module_doc" do
-    test "extracts a double-quoted module docstring" do
-      python = """
-      \"\"\"Module description.\"\"\"
-
-      def foo():
-          pass
-      """
-
-      assert PyDocExtractor.parse(python).module_doc == "Module description."
-    end
-
-    test "extracts a single-quoted module docstring" do
-      python = "'''Module description.'''\n\ndef foo():\n    pass\n"
-      assert PyDocExtractor.parse(python).module_doc == "Module description."
-    end
-
-    test "trims whitespace from module docstring" do
-      python = "\"\"\"\n  Multi-line\n  module doc.\n\"\"\"\n"
-      assert PyDocExtractor.parse(python).module_doc == "Multi-line\n  module doc."
-    end
-
-    test "returns nil when there is no module docstring" do
-      python = "import os\n\ndef foo():\n    pass\n"
-      assert PyDocExtractor.parse(python).module_doc == nil
-    end
-
-    test "returns nil for empty content" do
-      assert PyDocExtractor.parse("").module_doc == nil
-    end
-  end
-
-  # ---------------------------------------------------------------------------
   # functions
   # ---------------------------------------------------------------------------
 
@@ -142,41 +106,94 @@ defmodule DdScriptSelector.PyDocExtractorTest do
       assert func.name == "count"
       assert func.doc == "Returns count."
     end
+
+    test "extracts a function with a multiline signature" do
+      python = """
+      def followers_to_df(
+          reader: ZipArchiveReader,
+          errors: Counter,
+          *,
+          filename: str = "followers_1.json",
+      ) -> pd.DataFrame:
+          \"\"\"Extract the list of followers into a DataFrame.
+
+          Parameters
+          ----------
+          reader:
+              Archive reader used to load JSON files from the DDP zip.
+          errors:
+              Mutable counter that accumulates error type counts.
+          filename:
+              Path inside the zip archive to read.
+
+          Returns
+          -------
+          pd.DataFrame
+              Columns: ``Account``, ``URL``, ``Date``.
+          \"\"\"
+          pass
+      """
+
+      [func] = PyDocExtractor.parse(python).functions
+      assert func.name == "followers_to_df"
+      assert func.doc =~ "Extract the list of followers into a DataFrame."
+      assert func.doc =~ "Parameters"
+      assert func.doc =~ "Returns"
+      assert func.doc =~ "pd.DataFrame"
+    end
+
+    test "extracts multiple functions where some have multiline signatures" do
+      python = """
+      def simple(x):
+          \"\"\"Simple doc.\"\"\"
+          return x
+
+      def complex_fn(
+          a: int,
+          b: str = "default",
+      ) -> bool:
+          \"\"\"Complex doc.\"\"\"
+          return True
+      """
+
+      functions = PyDocExtractor.parse(python).functions
+      assert length(functions) == 2
+      assert Enum.at(functions, 0).name == "simple"
+      assert Enum.at(functions, 0).doc == "Simple doc."
+      assert Enum.at(functions, 1).name == "complex_fn"
+      assert Enum.at(functions, 1).doc == "Complex doc."
+    end
   end
 
   # ---------------------------------------------------------------------------
-  # extract/1
+  # table_config_json
   # ---------------------------------------------------------------------------
 
-  # ---------------------------------------------------------------------------
-  # config_json
-  # ---------------------------------------------------------------------------
-
-  describe "parse/1 - config_json" do
-    test "extracts the triple-quoted DEFAULT_CONFIG_JSON string" do
+  describe "parse/1 - table_config_json" do
+    test "extracts the triple-quoted DEFAULT_TABLE_CONFIG_JSON string" do
       python = """
       \"\"\"Module doc.\"\"\"
 
-      DEFAULT_CONFIG_JSON: str = \"\"\"
+      DEFAULT_TABLE_CONFIG_JSON: str = \"\"\"
       {\"tables\": [{\"id\": \"t1\"}]}
       \"\"\"
       """
 
-      assert PyDocExtractor.parse(python).config_json == "{\"tables\": [{\"id\": \"t1\"}]}"
+      assert PyDocExtractor.parse(python).table_config_json == "{\"tables\": [{\"id\": \"t1\"}]}"
     end
 
-    test "returns nil when DEFAULT_CONFIG_JSON is absent" do
-      assert PyDocExtractor.parse("x = 1\n").config_json == nil
+    test "returns nil when DEFAULT_TABLE_CONFIG_JSON is absent" do
+      assert PyDocExtractor.parse("x = 1\n").table_config_json == nil
     end
 
     test "trims surrounding whitespace from the extracted JSON string" do
       python = """
-      DEFAULT_CONFIG_JSON: str = \"\"\"
+      DEFAULT_TABLE_CONFIG_JSON: str = \"\"\"
         {\"tables\": []}
       \"\"\"
       """
 
-      assert PyDocExtractor.parse(python).config_json == "{\"tables\": []}"
+      assert PyDocExtractor.parse(python).table_config_json == "{\"tables\": []}"
     end
   end
 
@@ -199,7 +216,6 @@ defmodule DdScriptSelector.PyDocExtractorTest do
       on_exit(fn -> File.rm(path) end)
 
       result = PyDocExtractor.extract(path)
-      assert result.module_doc == "A temp module."
       assert length(result.functions) == 1
       assert hd(result.functions).name == "hello"
     end

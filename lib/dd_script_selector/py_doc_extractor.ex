@@ -42,7 +42,7 @@ defmodule DdScriptSelector.PyDocExtractor do
 
   defp extract_functions(content) do
     Regex.scan(
-      ~r/^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\([^)]*\)[^:\n]*:\n((?:[ \t]+[^\n]*\n?)*)/m,
+      ~r/^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\([\s\S]*?\)[^:\n]*:\n((?:(?:[ \t]+[^\n]*)?\n)*)/m,
       content
     )
     |> Enum.map(fn [_, name, body] ->

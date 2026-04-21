@@ -8,7 +8,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLiveTest do
   Alpha platform module docstring.
   \"\"\"
 
-  DEFAULT_CONFIG_JSON: str = \"\"\"
+  DEFAULT_TABLE_CONFIG_JSON: str = \"\"\"
   {
     "tables": [
       {
@@ -236,7 +236,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLiveTest do
     send(view.pid, :poll_build)
     render(view)
 
-    assert_push_event(view, "trigger-download-url", %{"path" => "/builds/uuid-done/download"})
+    assert_push_event(view, "trigger-download-url", %{path: "/builds/uuid-done/download"})
     assert has_element?(view, "#build-status-banner", "Build complete")
   end
 

@@ -11,7 +11,7 @@ defmodule DdScriptSelector.PlatformsTest do
   end
 
   describe "list/1" do
-    test "returns platforms from .py files with correct name and doc" do
+    test "returns platforms from .py files with correct name" do
       dir = tmp_dir()
 
       File.write!(Path.join(dir, "instagram.py"), """
@@ -26,22 +26,6 @@ defmodule DdScriptSelector.PlatformsTest do
       assert length(platforms) == 1
       [platform] = platforms
       assert platform.name == "Instagram"
-      assert platform.doc == "Instagram platform module."
-    end
-
-    test "returns nil doc when .py file has no module docstring" do
-      dir = tmp_dir()
-
-      File.write!(Path.join(dir, "twitter.py"), """
-      import os
-
-      def process():
-          pass
-      """)
-
-      [platform] = Platforms.list(dir)
-      assert platform.name == "Twitter"
-      assert platform.doc == nil
     end
 
     test "ignores non-.py files" do
@@ -72,13 +56,13 @@ defmodule DdScriptSelector.PlatformsTest do
       assert names == ["Amazon", "Netflix", "Youtube"]
     end
 
-    test "returns tables and available_languages from DEFAULT_CONFIG_JSON" do
+    test "returns tables and available_languages from DEFAULT_TABLE_CONFIG_JSON" do
       dir = tmp_dir()
 
       File.write!(Path.join(dir, "myplatform.py"), """
       \"\"\"My platform.\"\"\"
 
-      DEFAULT_CONFIG_JSON: str = \"\"\"
+      DEFAULT_TABLE_CONFIG_JSON: str = \"\"\"
       {
         "tables": [
           {

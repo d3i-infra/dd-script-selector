@@ -57,10 +57,11 @@ defmodule DdScriptSelector.Platforms do
   defp extract_table_config({:error, _}), do: {[], []}
   defp extract_table_config(%{table_config_json: nil}), do: {[], []}
 
-  defp extract_table_config(%{table_config_json: json}) do
+  defp extract_table_config(%{table_config_json: json, functions: functions}) do
     case Jason.decode(json) do
       {:ok, %{"tables" => raw_tables}} ->
-        tables = Enum.map(raw_tables, &normalize_table/1)
+        func_docs = Map.new(functions, fn %{name: name, doc: doc} -> {name, doc} end)
+        tables = Enum.map(raw_tables, &normalize_table(&1, func_docs))
         {tables, derive_languages(tables)}
 
       _ ->
@@ -68,15 +69,17 @@ defmodule DdScriptSelector.Platforms do
     end
   end
 
-  defp normalize_table(raw) do
+  defp normalize_table(raw, func_docs) do
     headers = raw["headers"] || %{}
+    extractor = raw["extractor"]
+    documentation = func_docs |> Map.get(extractor) |> extract_table_documentation()
 
     %{
       id: raw["id"],
-      extractor: raw["extractor"],
+      extractor: extractor,
       title: raw["title"] || %{},
       description: raw["description"] || %{},
-      documentation: raw["documentation"],
+      documentation: documentation,
       headers: headers,
       extractor_kwargs: raw["extractor_kwargs"] || %{},
       visualizations: raw["visualizations"] || [],
@@ -84,6 +87,21 @@ defmodule DdScriptSelector.Platforms do
       enabled: true,
       enabled_headers: headers |> Map.keys() |> Enum.sort()
     }
+  end
+
+  defp extract_table_documentation(nil), do: nil
+
+  defp extract_table_documentation(doc) do
+    case Regex.run(~r/Table documentation::\n([\s\S]*)/s, doc) do
+      [_, block] ->
+        case YamlElixir.read_from_string(block) do
+          {:ok, map} when is_map(map) -> map
+          _ -> nil
+        end
+
+      _ ->
+        nil
+    end
   end
 
   defp derive_languages([]), do: []
