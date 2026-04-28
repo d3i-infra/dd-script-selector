@@ -40,16 +40,14 @@ if config_env() == :prod do
 
   config :dd_script_selector, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
-  platforms_base =
-    System.get_env("PLATFORMS_DIR") ||
+  task_dir =
+    System.get_env("TASK_DIR") ||
       raise """
-      environment variable PLATFORMS_DIR is missing.
-      Set it to the base directory (the path will be extended with /packages/python/port/platforms).
+      environment variable TASK_DIR is missing.
+      Set it to the root of the data-donation-task repository.
       """
 
-  platforms_dir = Path.join(platforms_base, "packages/python/port/platforms")
-
-  config :dd_script_selector, :platforms_dir, platforms_dir
+  config :dd_script_selector, :task_dir, task_dir
 
   config :dd_script_selector, :builder_base, System.get_env("BUILDER_BASE", "http://localhost:8000")
 

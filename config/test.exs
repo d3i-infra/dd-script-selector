@@ -27,5 +27,5 @@ config :phoenix_live_view,
 config :phoenix,
   sort_verified_routes_query_params: true
 
-config :dd_script_selector, :platforms_dir,
-  Path.join(System.tmp_dir!(), "dd_script_selector_test/platforms")
+config :dd_script_selector, :task_dir,
+  Path.expand("../../data-donation-task", __DIR__)

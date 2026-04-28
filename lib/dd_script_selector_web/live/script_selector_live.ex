@@ -1,11 +1,11 @@
 defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   use DdScriptSelectorWeb, :live_view
 
-  alias DdScriptSelector.Platforms
+  alias DdScriptSelector.PlatformsCache
 
 
   def mount(_params, _session, socket) do
-    platforms = Platforms.list()
+    platforms = PlatformsCache.list()
 
     socket =
       socket
