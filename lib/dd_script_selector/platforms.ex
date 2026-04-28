@@ -1,45 +1,27 @@
 defmodule DdScriptSelector.Platforms do
   @moduledoc """
-  Lists available platform scripts from the cloned data-donation-task repository.
+  Lists available platform scripts from the configured platforms list.
   """
 
   alias DdScriptSelector.PyDocExtractor
 
   @doc """
-  Lists platforms from the configured platforms directory.
+  Lists platforms from the configured `:platforms` list.
 
-  Returns a list of platform maps sorted alphabetically by filename.
+  Returns a list of platform maps sorted alphabetically by name.
   Each map has keys: `:name`, `:platform_info`, `:tables`, `:available_languages`.
   """
   def list do
-    task_dir = Application.fetch_env!(:dd_script_selector, :task_dir)
-    list(task_dir)
-  end
+    platforms = Application.fetch_env!(:dd_script_selector, :platforms)
 
-  @doc """
-  Lists platforms from `task_dir`, the root of the data-donation-task repository.
-  Returns `[]` if the platforms directory does not exist or cannot be read.
-  """
-  def list(task_dir) do
-    dir = Path.join(task_dir, "packages/python/port/platforms")
-
-    case File.ls(dir) do
-      {:ok, files} ->
-        files
-        |> Enum.filter(&String.ends_with?(&1, ".py"))
-        |> Enum.sort()
-        |> Enum.flat_map(fn filename ->
-          name = Path.rootname(filename)
-
-          case PyDocExtractor.extract(name, task_dir) do
-            {:ok, config} -> [build_platform(name, config)]
-            _ -> []
-          end
-        end)
-
-      {:error, _} ->
-        []
-    end
+    platforms
+    |> Enum.sort()
+    |> Enum.flat_map(fn name ->
+      case PyDocExtractor.extract(name) do
+        {:ok, config} -> [build_platform(name, config)]
+        _ -> []
+      end
+    end)
   end
 
   # ---------------------------------------------------------------------------

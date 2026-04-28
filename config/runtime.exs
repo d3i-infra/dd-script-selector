@@ -40,16 +40,15 @@ if config_env() == :prod do
 
   config :dd_script_selector, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
-  task_dir =
-    System.get_env("TASK_DIR") ||
-      raise """
-      environment variable TASK_DIR is missing.
-      Set it to the root of the data-donation-task repository.
-      """
-
-  config :dd_script_selector, :task_dir, task_dir
-
   config :dd_script_selector, :builder_base, System.get_env("BUILDER_BASE", "http://localhost:8000")
+
+  platforms =
+    case System.get_env("PLATFORMS") do
+      nil -> ~w(chatgpt chrome facebook instagram linkedin netflix tiktok whatsapp x youtube)
+      val -> String.split(val, ",", trim: true)
+    end
+
+  config :dd_script_selector, :platforms, platforms
 
   dev_mode = System.get_env("DEV_MODE") == "true"
 
