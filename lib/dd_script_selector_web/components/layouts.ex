@@ -36,9 +36,10 @@ defmodule DdScriptSelectorWeb.Layouts do
   def app(assigns) do
     ~H"""
     <header class="px-4 sm:px-6 lg:px-8 py-2 border-b border-base-300 bg-base-100">
-      <div class="mx-auto max-w-2xl">
-        <.link navigate="/" class="inline-flex items-center text-base-content/40 hover:text-base-content/70 transition-colors">
+      <div class="mx-auto max-w-2xl flex items-center justify-between">
+        <.link navigate="/" class="inline-flex items-center gap-2 text-base-content/50 hover:text-base-content/80 transition-colors">
           <.icon name="hero-home" class="size-4" />
+          <span class="text-sm font-semibold hidden sm:inline">D3I Script Builder</span>
         </.link>
       </div>
     </header>
