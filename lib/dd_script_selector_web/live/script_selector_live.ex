@@ -1,6 +1,8 @@
 defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   use DdScriptSelectorWeb, :live_view
 
+  require Logger
+
   alias DdScriptSelector.PlatformsCache
 
 
@@ -168,21 +170,29 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
   def handle_event("emit_config", _params, socket) do
     if valid_config?(socket.assigns.tables) do
-      config_json = socket.assigns.tables |> build_config(socket.assigns.selected) |> Jason.encode!()
+      config_json = socket.assigns.tables |> build_config(socket.assigns.selected_platform.platform_info) |> Jason.encode!()
       documentation = build_documentation(socket.assigns.tables, socket.assigns.selected_platform.platform_info)
+
+      payload = %{
+        config: config_json,
+        output_dir: "releases",
+        documentation: documentation
+      }
+
+      Logger.debug("""
+      [emit_config] POST #{builder_base()}/build
+
+      --- config ---
+      #{Jason.decode!(config_json) |> Jason.encode!(pretty: true)}
+
+      --- documentation ---
+      #{documentation}
+      """)
 
       result =
         Req.post(
           builder_base() <> "/build",
-          [
-            {:json,
-             %{
-               config: config_json,
-               output_dir: "releases",
-               documentation: documentation
-             }}
-            | builder_req_opts()
-          ]
+          [{:json, payload} | builder_req_opts()]
         )
 
       case result do
@@ -294,7 +304,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     |> Enum.all?(fn t -> length(t.enabled_headers) > 0 end)
   end
 
-  defp build_config(tables, platform) do
+  defp build_config(tables, platform_info) do
     enabled_tables =
       tables
       |> Enum.filter(& &1.enabled)
@@ -309,31 +319,15 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
           "description" => table.description,
           "headers" => filtered_headers,
           "extractor_kwargs" => table.extractor_kwargs,
-          "visualizations" => table.visualizations,
-          "variables" => table.enabled_headers
-        }
-      end)
-
-    %{"platform" => platform, "tables" => enabled_tables}
-  end
-
-  defp build_documentation(tables, platform_info) do
-    enabled_tables =
-      tables
-      |> Enum.filter(& &1.enabled)
-      |> Enum.map(fn table ->
-        filtered_headers =
-          Map.filter(table.headers, fn {key, _} -> key in table.enabled_headers end)
-
-        %{
-          "id" => table.id,
-          "title" => table.title,
-          "description" => table.description,
-          "documentation" => table.documentation,
-          "variables" => filtered_headers
+          "variables" => table.enabled_headers,
+          "documentation" => table.documentation
         }
       end)
 
     %{"platform_info" => platform_info, "tables" => enabled_tables}
+  end
+
+  defp build_documentation(tables, platform_info) do
+    DdScriptSelector.DocumentationFormatter.format(tables, platform_info)
   end
 end

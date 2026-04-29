@@ -30,8 +30,14 @@ defmodule DdScriptSelector.Platforms do
 
   defp build_platform(name, %{"platform_info" => info, "tables" => raw_tables}) do
     tables = Enum.map(raw_tables, &normalize_table/1)
-    languages = info["languages"] || []
-    available_languages = (["en"] ++ Enum.sort(languages -- ["en"])) |> Enum.uniq()
+
+    languages_from_tables =
+      tables
+      |> Enum.flat_map(fn t -> Map.keys(t.title) end)
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    available_languages = (["en"] ++ (languages_from_tables -- ["en"])) |> Enum.uniq()
 
     %{
       name: String.capitalize(name),
