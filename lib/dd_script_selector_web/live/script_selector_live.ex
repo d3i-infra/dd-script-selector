@@ -153,6 +153,13 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     {:noreply, assign(socket, :tables, tables)}
   end
 
+  def handle_event("reorder_tables", %{"old_index" => old_idx, "new_index" => new_idx}, socket) do
+    tables = socket.assigns.tables
+    {moved, rest} = List.pop_at(tables, old_idx)
+    reordered = List.insert_at(rest, new_idx, moved)
+    {:noreply, assign(socket, :tables, reordered)}
+  end
+
   def handle_event("change_language", %{"lang" => lang}, socket) do
     {:noreply, assign(socket, :language, lang)}
   end

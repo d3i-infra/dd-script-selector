@@ -13,15 +13,14 @@
   </div>
 
   <%!-- Step 1: Platform Selection --%>
-  <div :if={@step == :select_platform}>
-    <div class="p-8 pb-24">
+  <div :if={@step == :select_platform} class="flex flex-col h-[calc(100dvh-10rem)]">
+    <div class="flex flex-col flex-1 min-h-0 p-8 pb-2">
       <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Select a platform</h1>
       <p class="text-sm mb-6" style="color: #6a6a6a;">
         Choose the platform whose data download package your participants will share.
         Each platform comes with pre-configured data tables and variables you can customise in the next step.
-        <span class="font-medium" style="color: #50545d;">{length(@platforms)} platforms available.</span>
       </p>
-      <ul id="platform-list" phx-update="stream" class="space-y-2 max-w-lg">
+      <ul id="platform-list" phx-update="stream" class="flex-1 min-h-0 overflow-y-auto space-y-2 max-w-lg pr-1">
         <li
           :for={platform <- @platforms}
           id={"platform-#{platform.name}"}
@@ -58,36 +57,41 @@
   <%!-- Step 2: Configuration --%>
   <div :if={@step == :configure}>
     <div class="p-8 pb-24">
-      <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Configure your {@title} script</h1>
-      <p class="text-sm mb-3" style="color: #6a6a6a;">
-        Enable or disable tables to control what data gets extracted, then select the variables to include per table.
-        You can also edit table titles and descriptions to tailor the script to your study.
-      </p>
-      <p class="text-sm mb-4" style="color: #6a6a6a;">
-        The platform info below lists the DDP file types and languages this script supports.
-        Make sure these match the data download packages your participants will be requesting.
+      <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Configure your {@title} data donation flow</h1>
+      <p class="text-sm mb-6" style="color: #6a6a6a;">
+        Select which tables and variables to include in your flow, set the order they appear in,
+        and edit their titles and descriptions to match your study's language and framing.
+        When you're happy, hit <strong>Download</strong> to get a ready-to-deploy data donation flow for {@title}.
       </p>
 
       <%!-- Platform info --%>
-      <div :if={not is_nil(@selected_platform.platform_info)} class="mb-6 space-y-1 text-sm text-base-content/60">
+      <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color: #252a34;">Platform details</h2>
+      <div :if={not is_nil(@selected_platform.platform_info)} class="mb-6 text-sm text-base-content/60 space-y-1">
+        <p :if={@selected_platform.platform_info["description"]} class="mb-2">
+          {@selected_platform.platform_info["description"]}
+        </p>
         <p :if={@selected_platform.platform_info["filetypes"]}>
-          <span class="font-medium">Supported DDP file types:</span>
+          <span class="font-medium text-base-content/80">File types:</span>
           {Enum.join(@selected_platform.platform_info["filetypes"], ", ")}
         </p>
         <p :if={@selected_platform.platform_info["languages"]}>
-          <span class="font-medium">Supported DDP languages:</span>
+          <span class="font-medium text-base-content/80">DDP languages:</span>
           {Enum.join(@selected_platform.platform_info["languages"], ", ")}
-        </p>
-        <p :if={@selected_platform.platform_info["description"]} class="pt-1 text-base-content/50">
-          {@selected_platform.platform_info["description"]}
         </p>
       </div>
       <div :if={is_nil(@selected_platform.platform_info)} class="mb-6 text-sm text-base-content/50 italic">
-        No description available.
+        No platform details available.
       </div>
 
+      <%!-- Table configurator --%>
+      <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color: #252a34;">Tables</h2>
+      <p class="text-sm mb-4" style="color: #6a6a6a;">
+        Enable the tables you want to collect and pick the variables within each one.
+        Drag the handle on the left to reorder tables — the order here is the order participants will see them.
+        The table titles and descriptions are shown directly to participants, so tailor them to your study.
+      </p>
       <%!-- Language toggle --%>
-      <div :if={length(@available_languages) > 1} id="language-toggle" class="flex gap-1 mb-6">
+      <div :if={length(@available_languages) > 1} id="language-toggle" class="flex gap-1 mb-3">
         <button
           :for={lang <- @available_languages}
           phx-click="change_language"
@@ -101,15 +105,13 @@
           {lang}
         </button>
       </div>
-
-      <%!-- Table configurator --%>
       <div :if={@tables != []} class="flex gap-2 mb-3">
         <button phx-click="select_all_tables" class="btn btn-xs btn-outline">Select all</button>
         <button phx-click="deselect_all_tables" class="btn btn-xs btn-outline">
           Deselect all
         </button>
       </div>
-      <div class="space-y-3">
+      <div id="table-configurator" phx-hook="TableSorter" class="space-y-3">
         <div
           :for={table <- @tables}
           id={"table-#{table.id}"}
@@ -117,6 +119,9 @@
         >
           <%!-- Table header with enable/disable checkbox --%>
           <div class="flex items-start gap-3">
+            <button type="button" class="drag-handle mt-0.5 cursor-grab active:cursor-grabbing text-base-content/25 hover:text-base-content/50 transition-colors shrink-0" title="Drag to reorder">
+              <.icon name="hero-bars-3" class="h-4 w-4" />
+            </button>
             <input
               type="checkbox"
               class="checkbox checkbox-primary mt-0.5"
@@ -326,7 +331,7 @@
     <div :if={@build_status in ["queued", "running"]} class="border-t border-base-300 px-8 py-3 flex items-center gap-3 bg-base-200/50">
       <span class="loading loading-spinner loading-sm text-primary shrink-0"></span>
       <div class="min-w-0">
-        <p class="text-sm font-medium">Building your script…</p>
+        <p class="text-sm font-medium">Building your data donation flow…</p>
         <p :if={@build_logs != []} class="text-xs text-base-content/50 mt-0.5 truncate">{List.last(@build_logs)}</p>
       </div>
     </div>
@@ -367,7 +372,7 @@
           class={["btn btn-primary", not valid_config?(@tables) && "btn-disabled"]}
           disabled={not valid_config?(@tables)}
         >
-          Download script
+          Download flow
         </button>
 
         <button
