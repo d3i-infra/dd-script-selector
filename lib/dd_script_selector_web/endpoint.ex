@@ -8,7 +8,8 @@ defmodule DdScriptSelectorWeb.Endpoint do
     store: :cookie,
     key: "_dd_script_selector_key",
     signing_salt: "SXJk9s/d",
-    same_site: "Lax"
+    same_site: "None",
+    secure: true
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
