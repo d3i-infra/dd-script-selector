@@ -76,6 +76,15 @@ window.addEventListener("phx:trigger-download-url", ({detail: {path}}) => {
   document.body.removeChild(a)
 })
 
+// Stream builder API logs and errors to the browser console.
+// push_event("builder-log", %{lines: [...]}) and push_event("builder-error", %{message: "..."})
+window.addEventListener("phx:builder-log", ({detail: {lines}}) => {
+  lines.forEach(line => console.log("[builder]", line))
+})
+window.addEventListener("phx:builder-error", ({detail: {message}}) => {
+  console.error("[builder error]", message)
+})
+
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 

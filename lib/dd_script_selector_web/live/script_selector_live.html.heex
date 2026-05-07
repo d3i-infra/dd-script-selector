@@ -1,4 +1,4 @@
-<Layouts.app flash={@flash}>
+<Layouts.app flash={@flash} show_header={false}>
   <%!-- Step progress indicator --%>
   <div class="flex items-center gap-3 px-8 pt-6 pb-0">
     <div class={["flex items-center gap-2 text-sm", @step == :select_platform && "font-semibold text-primary", @step != :select_platform && "text-base-content/40"]}>

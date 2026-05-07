@@ -214,11 +214,20 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
            |> assign(:build_error, nil)
            |> assign(:poll_retries, 0)}
 
-        _ ->
+        other ->
+          api_detail =
+            case other do
+              {:ok, %{status: status, body: body}} -> "HTTP #{status}: #{inspect(body)}"
+              {:error, reason} -> inspect(reason)
+            end
+
+          error = "Builder API unavailable"
+
           {:noreply,
            socket
+           |> push_event("builder-error", %{message: "#{error} — #{api_detail}"})
            |> assign(:build_status, "error")
-           |> assign(:build_error, "Builder API unavailable")}
+           |> assign(:build_error, error)}
       end
     else
       {:noreply, socket}
@@ -238,6 +247,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
           |> assign(:build_status, status)
           |> assign(:build_logs, logs)
           |> assign(:poll_retries, 0)
+          |> push_event("builder-log", %{lines: logs})
 
         socket =
           case status do
@@ -253,7 +263,11 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
               })
 
             "error" ->
-              assign(socket, :build_error, body["error"] || "Unknown build error")
+              error = body["error"] || "Unknown build error"
+
+              socket
+              |> push_event("builder-error", %{message: error})
+              |> assign(:build_error, error)
 
             _ ->
               socket
@@ -265,10 +279,13 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         retries = socket.assigns.poll_retries + 1
 
         if retries > 3 do
+          error = "Lost connection to builder API"
+
           {:noreply,
            socket
+           |> push_event("builder-error", %{message: error})
            |> assign(:build_status, "error")
-           |> assign(:build_error, "Lost connection to builder API")}
+           |> assign(:build_error, error)}
         else
           Process.send_after(self(), :poll_build, 2_000)
           {:noreply, assign(socket, :poll_retries, retries)}

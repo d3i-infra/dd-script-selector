@@ -31,11 +31,13 @@ defmodule DdScriptSelectorWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
+  attr :show_header, :boolean, default: true
+
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <header class="px-4 sm:px-6 lg:px-8 py-2 border-b border-base-300 bg-base-100">
+    <header :if={@show_header} class="px-4 sm:px-6 lg:px-8 py-2 border-b border-base-300 bg-base-100">
       <div class="mx-auto max-w-2xl flex items-center justify-between">
         <.link navigate="/" class="inline-flex items-center gap-2 text-base-content/50 hover:text-base-content/80 transition-colors">
           <.icon name="hero-home" class="size-4" />
