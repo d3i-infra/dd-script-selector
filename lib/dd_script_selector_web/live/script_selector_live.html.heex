@@ -86,9 +86,10 @@
       <%!-- Table configurator --%>
       <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color: #252a34;">Tables</h2>
       <p class="text-sm mb-4" style="color: #6a6a6a;">
-        Enable the tables you want to collect and pick the variables within each one.
-        Drag the handle on the left to reorder tables — the order here is the order participants will see them.
-        The table titles and descriptions are shown directly to participants, so tailor them to your study.
+        Tick the tables you want to collect data from, and within each table tick the variables to include.
+        Drag the handles to set the order — tables and variables appear to participants in exactly this order.
+        The titles, descriptions, and variable labels are shown directly to participants, so edit them to match your study's language and framing.
+        Use the language buttons above to switch between translations and edit each one independently.
       </p>
       <%!-- Language toggle --%>
       <div :if={length(@available_languages) > 1} id="language-toggle" class="flex gap-1 mb-3">
@@ -226,7 +227,7 @@
             </div>
           </div>
 
-          <%!-- Variable checkboxes (only when table is enabled) --%>
+          <%!-- Variable list (only when table is enabled) --%>
           <div :if={table.enabled} id={"variables-#{table.id}"} class="mt-3 ml-7">
             <div class="flex gap-1.5 mb-2">
               <button
@@ -244,24 +245,72 @@
                 Deselect all
               </button>
             </div>
-            <div class="space-y-1">
-              <label
-                :for={{key, label} <- table.headers}
-                class="flex items-center gap-2 cursor-pointer"
+            <div id={"header-sorter-#{table.id}"} phx-hook="HeaderSorter" data-table-id={table.id} class="space-y-1">
+              <div
+                :for={key <- table.headers_order}
+                id={"header-#{table.id}-#{key}"}
+                class="flex items-center gap-2 py-0.5"
               >
+                <button
+                  type="button"
+                  class="drag-handle cursor-grab active:cursor-grabbing text-base-content/25 hover:text-base-content/50 transition-colors shrink-0"
+                  title="Drag to reorder"
+                >
+                  <.icon name="hero-bars-3" class="h-3.5 w-3.5" />
+                </button>
                 <input
                   type="checkbox"
-                  class="checkbox checkbox-sm checkbox-primary"
+                  class="checkbox checkbox-sm checkbox-primary shrink-0"
                   checked={key in table.enabled_headers}
                   value={key}
                   phx-click="toggle_variable"
                   phx-value-table_id={table.id}
                   phx-value-key={key}
                 />
-                <span class="text-sm">
-                  {label[@language] || label["en"]}
-                </span>
-              </label>
+                <span class="font-mono text-xs text-base-content/50 shrink-0">{key}</span>
+                <%!-- Click-to-edit label --%>
+                <div class="flex items-center gap-1 min-w-0">
+                  <span
+                    :if={@editing_header != {table.id, key}}
+                    class="text-sm truncate"
+                  >
+                    {(table.headers[key] || %{})[@language] || (table.headers[key] || %{})["en"] || key}
+                  </span>
+                  <button
+                    :if={@editing_header != {table.id, key}}
+                    phx-click="edit_header_label"
+                    phx-value-table_id={table.id}
+                    phx-value-key={key}
+                    class="text-base-content/30 hover:text-base-content/60 transition-colors shrink-0"
+                    title="Edit label"
+                  >
+                    <.icon name="hero-pencil-square" class="h-3 w-3" />
+                  </button>
+                  <form
+                    :if={@editing_header == {table.id, key}}
+                    phx-submit="save_header_label"
+                    class="flex items-center gap-1"
+                  >
+                    <input type="hidden" name="table_id" value={table.id} />
+                    <input type="hidden" name="key" value={key} />
+                    <input
+                      name="value"
+                      type="text"
+                      value={(table.headers[key] || %{})[@language] || (table.headers[key] || %{})["en"] || key}
+                      class="input input-bordered input-xs text-sm"
+                      autofocus
+                    />
+                    <button type="submit" class="btn btn-xs btn-primary">Save</button>
+                    <button
+                      type="button"
+                      phx-click="cancel_edit_header_label"
+                      class="btn btn-xs btn-ghost"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
             <%!-- Per-table variable validation --%>
             <p :if={table.enabled_headers == []} class="mt-2 text-error text-xs">

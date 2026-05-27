@@ -26,6 +26,25 @@ import {hooks as colocatedHooks} from "phoenix-colocated/dd_script_selector"
 import topbar from "../vendor/topbar"
 import Sortable from "../vendor/sortable"
 
+const HeaderSorter = {
+  mounted() {
+    const tableId = this.el.dataset.tableId
+    this.sortable = new Sortable(this.el, {
+      animation: 150,
+      handle: ".drag-handle",
+      ghostClass: "opacity-40",
+      onEnd: ({oldIndex, newIndex}) => {
+        if (oldIndex !== newIndex) {
+          this.pushEvent("reorder_headers", {table_id: tableId, old_index: oldIndex, new_index: newIndex})
+        }
+      }
+    })
+  },
+  destroyed() {
+    this.sortable?.destroy()
+  }
+}
+
 const TableSorter = {
   mounted() {
     this.sortable = new Sortable(this.el, {
@@ -48,7 +67,7 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, TableSorter},
+  hooks: {...colocatedHooks, TableSorter, HeaderSorter},
 })
 
 // Show progress bar on live navigation and form submits
