@@ -21,6 +21,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       |> assign(:available_languages, [])
       |> assign(:title, "")
       |> assign(:editing_table, nil)
+      |> assign(:editing_header, nil)
       |> assign(:build_id, nil)
       |> assign(:build_status, nil)
       |> assign(:build_logs, [])
@@ -58,7 +59,8 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     {:noreply,
      socket
      |> assign(:step, :select_platform)
-     |> assign(:editing_table, nil)}
+     |> assign(:editing_table, nil)
+     |> assign(:editing_header, nil)}
   end
 
   def handle_event("edit_table_field", %{"table_id" => table_id, "field" => field}, socket) do
@@ -90,6 +92,48 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
   def handle_event("cancel_edit_table_field", _params, socket) do
     {:noreply, assign(socket, :editing_table, nil)}
+  end
+
+  def handle_event("edit_header_label", %{"table_id" => table_id, "key" => key}, socket) do
+    {:noreply, assign(socket, :editing_header, {table_id, key})}
+  end
+
+  def handle_event(
+        "save_header_label",
+        %{"table_id" => table_id, "key" => key, "value" => value},
+        socket
+      ) do
+    lang = socket.assigns.language
+
+    tables =
+      Enum.map(socket.assigns.tables, fn table ->
+        if table.id == table_id do
+          updated_label = Map.put(table.headers[key] || %{}, lang, value)
+          %{table | headers: Map.put(table.headers, key, updated_label)}
+        else
+          table
+        end
+      end)
+
+    {:noreply, socket |> assign(:tables, tables) |> assign(:editing_header, nil)}
+  end
+
+  def handle_event("cancel_edit_header_label", _params, socket) do
+    {:noreply, assign(socket, :editing_header, nil)}
+  end
+
+  def handle_event("reorder_headers", %{"table_id" => table_id, "old_index" => old_idx, "new_index" => new_idx}, socket) do
+    tables =
+      Enum.map(socket.assigns.tables, fn table ->
+        if table.id == table_id do
+          {moved, rest} = List.pop_at(table.headers_order, old_idx)
+          %{table | headers_order: List.insert_at(rest, new_idx, moved)}
+        else
+          table
+        end
+      end)
+
+    {:noreply, assign(socket, :tables, tables)}
   end
 
   def handle_event("toggle_table", %{"id" => id}, socket) do
@@ -135,7 +179,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
     tables =
       Enum.map(socket.assigns.tables, fn table ->
         if table.id == table_id do
-          %{table | enabled_headers: table.headers |> Map.keys() |> Enum.sort()}
+          %{table | enabled_headers: table.headers_order}
         else
           table
         end
@@ -181,6 +225,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       documentation = build_documentation(socket.assigns.tables, socket.assigns.selected_platform.platform_info)
 
       payload = %{
+        platform: String.downcase(socket.assigns.selected_platform.name),
         config: config_json,
         output_dir: "releases",
         documentation: documentation
@@ -343,7 +388,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
           "description" => table.description,
           "headers" => filtered_headers,
           "extractor_kwargs" => table.extractor_kwargs,
-          "variables" => table.enabled_headers,
+          "variables" => Enum.filter(table.headers_order, &(&1 in MapSet.new(table.enabled_headers))),
           "documentation" => table.documentation
         }
       end)
