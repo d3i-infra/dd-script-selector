@@ -34,6 +34,9 @@ defmodule DdScriptSelector.PlatformsTest do
       assert Map.has_key?(table, :headers)
       assert table.enabled == true
       assert is_list(table.enabled_headers)
+      assert Map.has_key?(table, :headers_order)
+      assert is_list(table.headers_order)
+      assert table.headers_order == (table.headers |> Map.keys() |> Enum.sort())
     end
 
     test "available_languages always includes en first" do

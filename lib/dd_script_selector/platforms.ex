@@ -61,7 +61,8 @@ defmodule DdScriptSelector.Platforms do
       visualizations: raw["visualizations"] || [],
       variables: raw["variables"],
       enabled: true,
-      enabled_headers: headers |> Map.keys() |> Enum.sort()
+      enabled_headers: headers |> Map.keys() |> Enum.sort(),
+      headers_order: headers |> Map.keys() |> Enum.sort()
     }
   end
 end
