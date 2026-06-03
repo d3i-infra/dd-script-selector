@@ -19,6 +19,8 @@ defmodule DdScriptSelector.DocumentationFormatter do
     """
     # #{platform_name}
 
+    This document describes the data tables and variables included in the data donation flow for #{platform_name}.
+
     #{table_sections}
     """
     |> String.trim()
