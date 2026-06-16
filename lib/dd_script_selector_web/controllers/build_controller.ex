@@ -8,7 +8,7 @@ defmodule DdScriptSelectorWeb.BuildController do
       {:ok, %{status: 200, body: body}} ->
         conn
         |> put_resp_header("content-type", "application/zip")
-        |> put_resp_header("content-disposition", ~s|attachment; filename="build.zip"|)
+        |> put_resp_header("content-disposition", ~s|attachment; filename="build_#{:os.system_time(:second)}.zip"|)
         |> send_resp(200, body)
 
       _ ->

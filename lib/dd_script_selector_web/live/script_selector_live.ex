@@ -39,7 +39,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       socket
       |> assign(:selected, name)
       |> assign(:selected_platform, platform)
-      |> assign(:tables, platform.tables)
+      |> update_tables(platform.tables)
       |> assign(:language, "en")
       |> assign(:available_languages, platform.available_languages)
       |> assign(:title, name)
@@ -87,7 +87,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         end
       end)
 
-    {:noreply, socket |> assign(:tables, tables) |> assign(:editing_table, nil)}
+    {:noreply, socket |> update_tables(tables) |> assign(:editing_table, nil)}
   end
 
   def handle_event("cancel_edit_table_field", _params, socket) do
@@ -115,25 +115,33 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         end
       end)
 
-    {:noreply, socket |> assign(:tables, tables) |> assign(:editing_header, nil)}
+    {:noreply, socket |> update_tables(tables) |> assign(:editing_header, nil)}
   end
 
   def handle_event("cancel_edit_header_label", _params, socket) do
     {:noreply, assign(socket, :editing_header, nil)}
   end
 
-  def handle_event("reorder_headers", %{"table_id" => table_id, "old_index" => old_idx, "new_index" => new_idx}, socket) do
+  def handle_event("move_header", %{"table_id" => table_id, "key" => key, "dir" => dir}, socket) do
     tables =
       Enum.map(socket.assigns.tables, fn table ->
         if table.id == table_id do
-          {moved, rest} = List.pop_at(table.headers_order, old_idx)
-          %{table | headers_order: List.insert_at(rest, new_idx, moved)}
+          order = table.headers_order
+          idx = Enum.find_index(order, &(&1 == key))
+          new_idx = if dir == "up", do: idx - 1, else: idx + 1
+
+          if new_idx >= 0 and new_idx < length(order) do
+            {moved, rest} = List.pop_at(order, idx)
+            %{table | headers_order: List.insert_at(rest, new_idx, moved)}
+          else
+            table
+          end
         else
           table
         end
       end)
 
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
   def handle_event("toggle_table", %{"id" => id}, socket) do
@@ -142,7 +150,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         if table.id == id, do: %{table | enabled: !table.enabled}, else: table
       end)
 
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
   def handle_event("toggle_variable", %{"table_id" => table_id, "key" => key}, socket) do
@@ -162,17 +170,17 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         end
       end)
 
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
   def handle_event("select_all_tables", _params, socket) do
     tables = Enum.map(socket.assigns.tables, &%{&1 | enabled: true})
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
   def handle_event("deselect_all_tables", _params, socket) do
     tables = Enum.map(socket.assigns.tables, &%{&1 | enabled: false})
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
   def handle_event("select_all_variables", %{"table_id" => table_id}, socket) do
@@ -185,7 +193,7 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         end
       end)
 
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
   def handle_event("deselect_all_variables", %{"table_id" => table_id}, socket) do
@@ -194,14 +202,20 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
         if table.id == table_id, do: %{table | enabled_headers: []}, else: table
       end)
 
-    {:noreply, assign(socket, :tables, tables)}
+    {:noreply, update_tables(socket, tables)}
   end
 
-  def handle_event("reorder_tables", %{"old_index" => old_idx, "new_index" => new_idx}, socket) do
+  def handle_event("move_table", %{"id" => id, "dir" => dir}, socket) do
     tables = socket.assigns.tables
-    {moved, rest} = List.pop_at(tables, old_idx)
-    reordered = List.insert_at(rest, new_idx, moved)
-    {:noreply, assign(socket, :tables, reordered)}
+    idx = Enum.find_index(tables, &(&1.id == id))
+    new_idx = if dir == "up", do: idx - 1, else: idx + 1
+
+    if new_idx >= 0 and new_idx < length(tables) do
+      {moved, rest} = List.pop_at(tables, idx)
+      {:noreply, update_tables(socket, List.insert_at(rest, new_idx, moved))}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("change_language", %{"lang" => lang}, socket) do
@@ -355,6 +369,10 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
   # ---------------------------------------------------------------------------
   # Private
   # ---------------------------------------------------------------------------
+
+  defp update_tables(socket, tables) do
+    assign(socket, :tables, tables)
+  end
 
   defp builder_base, do: Application.get_env(:dd_script_selector, :builder_base, "http://localhost:8000")
   defp builder_req_opts, do: Application.get_env(:dd_script_selector, :builder_req_opts, [])

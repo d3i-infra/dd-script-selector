@@ -18,9 +18,20 @@
       <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Select a platform</h1>
       <p class="text-sm mb-6" style="color: #6a6a6a;">
         Choose the platform whose data download package your participants will share.
-        Each platform comes with pre-configured data tables and variables you can customise in the next step.
+        Each platform comes with pre-configured set of options from which you can pick and choose what data from the package you would like to collect. 
       </p>
-      <ul id="platform-list" phx-update="stream" class="flex-1 min-h-0 overflow-y-auto space-y-2 max-w-lg pr-1">
+      <p class="text-sm mb-6" style="color: #6a6a6a;">
+        A missing platform? Contact 
+        <a
+          href="mailto:datadonation@uu.nl"
+          rel="noopener noreferrer"
+          class="underline"
+        >
+          datadonation@uu.nl
+        </a>
+        and we will add it.
+      </p>
+      <ul id="platform-list" class="flex-1 min-h-0 overflow-y-auto space-y-2 max-w-lg pr-1">
         <li
           :for={platform <- @platforms}
           id={"platform-#{platform.name}"}
@@ -56,7 +67,7 @@
 
   <%!-- Step 2: Configuration --%>
   <div :if={@step == :configure}>
-    <div class="p-8 pb-24">
+    <div class="p-8">
       <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Configure your {@title} data donation flow</h1>
       <p class="text-sm mb-6" style="color: #6a6a6a;">
         Select which tables and variables to include in your flow, set the order they appear in,
@@ -83,52 +94,84 @@
         No platform details available.
       </div>
 
+      <%!-- Language toggle --%>
+      <div :if={length(@available_languages) > 1} id="language-toggle" class="mb-6">
+        <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color: #252a34;">Language of the data donation flow</h2>
+        <p class="text-sm mb-3" style="color: #6a6a6a;">
+          When deploying your flow, you can choose which language participants see. Edit the titles, descriptions, and labels below for each language — what you set here will be shown to participants in that language.
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            :for={lang <- @available_languages}
+            phx-click="change_language"
+            phx-value-lang={lang}
+            class={[
+              "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+              @language == lang && "bg-primary text-primary-content border-primary",
+              @language != lang && "border-base-300 hover:bg-base-200"
+            ]}
+          >
+            {lang}
+          </button>
+        </div>
+      </div>
+
       <%!-- Table configurator --%>
       <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color: #252a34;">Tables</h2>
       <p class="text-sm mb-4" style="color: #6a6a6a;">
         Tick the tables you want to collect data from, and within each table tick the variables to include.
-        Drag the handles to set the order — tables and variables appear to participants in exactly this order.
+        Use the arrow buttons to set the order — tables and variables appear to participants in exactly this order.
         The titles, descriptions, and variable labels are shown directly to participants, so edit them to match your study's language and framing.
-        Use the language buttons above to switch between translations and edit each one independently.
       </p>
-      <%!-- Language toggle --%>
-      <div :if={length(@available_languages) > 1} id="language-toggle" class="flex gap-1 mb-3">
-        <button
-          :for={lang <- @available_languages}
-          phx-click="change_language"
-          phx-value-lang={lang}
-          class={[
-            "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
-            @language == lang && "bg-primary text-primary-content border-primary",
-            @language != lang && "border-base-300 hover:bg-base-200"
-          ]}
-        >
-          {lang}
-        </button>
-      </div>
       <div :if={@tables != []} class="flex gap-2 mb-3">
         <button phx-click="select_all_tables" class="btn btn-xs btn-outline">Select all</button>
         <button phx-click="deselect_all_tables" class="btn btn-xs btn-outline">
           Deselect all
         </button>
       </div>
-      <div id="table-configurator" phx-hook="TableSorter" class="space-y-3">
+      <div id="table-configurator" class="space-y-2">
         <div
           :for={table <- @tables}
           id={"table-#{table.id}"}
-          class="border border-base-300 rounded-lg p-4"
+          class="flex gap-0 border border-base-300 rounded-lg overflow-hidden"
         >
+          <%!-- Move up/down column --%>
+          <div class="flex flex-col border-r border-base-300 bg-base-200/60 shrink-0">
+            <button
+              type="button"
+              phx-click="move_table"
+              phx-value-id={table.id}
+              phx-value-dir="up"
+              disabled={List.first(@tables, %{id: nil}).id == table.id}
+              title="Move this table up"
+              class="flex-1 flex items-center justify-center w-8 text-base-content/30 hover:text-primary hover:bg-base-200 transition-colors disabled:opacity-20 disabled:cursor-not-allowed border-b border-base-300"
+            >
+              <.icon name="hero-chevron-up" class="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              phx-click="move_table"
+              phx-value-id={table.id}
+              phx-value-dir="down"
+              disabled={List.last(@tables, %{id: nil}).id == table.id}
+              title="Move this table down"
+              class="flex-1 flex items-center justify-center w-8 text-base-content/30 hover:text-primary hover:bg-base-200 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+            >
+              <.icon name="hero-chevron-down" class="h-4 w-4" />
+            </button>
+          </div>
+          <%!-- Table content --%>
+          <div class="flex-1 p-4 min-w-0">
           <%!-- Table header with enable/disable checkbox --%>
           <div class="flex items-start gap-3">
-            <button type="button" class="drag-handle mt-0.5 cursor-grab active:cursor-grabbing text-base-content/25 hover:text-base-content/50 transition-colors shrink-0" title="Drag to reorder">
-              <.icon name="hero-bars-3" class="h-4 w-4" />
-            </button>
             <input
+              id={"table-enabled-#{table.id}"}
               type="checkbox"
               class="checkbox checkbox-primary mt-0.5"
               checked={table.enabled}
               phx-click="toggle_table"
               phx-value-id={table.id}
+              phx-hook="SyncCheckbox"
             />
             <div class="flex-1 min-w-0">
               <%!-- Editable title --%>
@@ -245,20 +288,40 @@
                 Deselect all
               </button>
             </div>
-            <div id={"header-sorter-#{table.id}"} phx-hook="HeaderSorter" data-table-id={table.id} class="space-y-1">
+            <div id={"header-sorter-#{table.id}"} class="space-y-1">
               <div
                 :for={key <- table.headers_order}
                 id={"header-#{table.id}-#{key}"}
-                class="flex items-center gap-2 py-0.5"
+                class="flex items-center gap-1.5 rounded-md px-1 py-0.5 hover:bg-base-200/60 group"
               >
-                <button
-                  type="button"
-                  class="drag-handle cursor-grab active:cursor-grabbing text-base-content/25 hover:text-base-content/50 transition-colors shrink-0"
-                  title="Drag to reorder"
-                >
-                  <.icon name="hero-bars-3" class="h-3.5 w-3.5" />
-                </button>
+                <div class="flex flex-col shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    phx-click="move_header"
+                    phx-value-table_id={table.id}
+                    phx-value-key={key}
+                    phx-value-dir="up"
+                    disabled={List.first(table.headers_order) == key}
+                    title="Move up"
+                    class="text-base-content/40 hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed leading-none"
+                  >
+                    <.icon name="hero-chevron-up" class="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    phx-click="move_header"
+                    phx-value-table_id={table.id}
+                    phx-value-key={key}
+                    phx-value-dir="down"
+                    disabled={List.last(table.headers_order) == key}
+                    title="Move down"
+                    class="text-base-content/40 hover:text-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed leading-none"
+                  >
+                    <.icon name="hero-chevron-down" class="h-3 w-3" />
+                  </button>
+                </div>
                 <input
+                  id={"header-enabled-#{table.id}-#{key}"}
                   type="checkbox"
                   class="checkbox checkbox-sm checkbox-primary shrink-0"
                   checked={key in table.enabled_headers}
@@ -266,6 +329,7 @@
                   phx-click="toggle_variable"
                   phx-value-table_id={table.id}
                   phx-value-key={key}
+                  phx-hook="SyncCheckbox"
                 />
                 <span class="font-mono text-xs text-base-content/50 shrink-0">{key}</span>
                 <%!-- Click-to-edit label --%>
@@ -365,6 +429,7 @@
               </div>
             </div>
           </div>
+          </div><%!-- end flex-1 content wrapper --%>
         </div>
       </div>
 
@@ -376,17 +441,28 @@
       </div>
     </div>
 
-    <%!-- Build status --%>
-    <div :if={@build_status in ["queued", "running"]} class="border-t border-base-300 px-8 py-3 flex items-center gap-3 bg-base-200/50">
-      <span class="loading loading-spinner loading-sm text-primary shrink-0"></span>
-      <div class="min-w-0">
-        <p class="text-sm font-medium">Building your data donation flow…</p>
-        <p :if={@build_logs != []} class="text-xs text-base-content/50 mt-0.5 truncate">{List.last(@build_logs)}</p>
+    <%!-- Download section header --%>
+    <div class="px-8 pt-8 pb-2">
+      <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color: #252a34;">Download</h2>
+      <div class="rounded-lg border border-base-300 bg-base-200/40 px-5 py-4">
+        <p class="text-sm mb-3" style="color: #6a6a6a;">
+          Click <strong>Download flow</strong> to receive a <code>.zip</code> file containing:
+        </p>
+        <ul class="text-sm space-y-2" style="color: #6a6a6a;">
+          <li class="flex items-start gap-2">
+            <.icon name="hero-archive-box" class="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+            A <strong>{@title}</strong> data donation flow, ready to deploy on Next
+          </li>
+          <li class="flex items-start gap-2">
+            <.icon name="hero-document-text" class="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+            A codebook describing the variables you selected, including their documentation
+          </li>
+        </ul>
       </div>
     </div>
 
-    <%!-- Bottom action bar --%>
-    <div class="sticky bottom-0 bg-base-100 border-t border-base-300 p-4">
+    <%!-- Action buttons --%>
+    <div class="px-8 pb-12">
       <%!-- Status banners --%>
       <div
         :if={@build_status == "done"}
@@ -405,7 +481,16 @@
         Build failed: {@build_error}
       </div>
 
-      <div class="flex justify-between items-center">
+      <%!-- Build status --%>
+      <div :if={@build_status in ["queued", "running"]} class="mb-3 flex items-center gap-3">
+        <span class="loading loading-spinner loading-sm text-primary shrink-0"></span>
+        <div class="min-w-0">
+          <p class="text-sm font-medium">Building your data donation flow…</p>
+          <p :if={@build_logs != []} class="text-xs text-base-content/50 mt-0.5 truncate">{List.last(@build_logs)}</p>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-4">
         <button
           phx-click="go_back"
           class={["btn btn-ghost", @build_status in ["queued", "running"] && "btn-disabled"]}
