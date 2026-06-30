@@ -18,8 +18,15 @@ defmodule DdScriptSelector.Platforms do
     |> Enum.sort()
     |> Enum.flat_map(fn name ->
       case PyDocExtractor.extract(name) do
-        {:ok, config} -> [build_platform(name, config)]
-        _ -> []
+        {:ok, config} ->
+          try do
+            [build_platform(name, config)]
+          rescue
+            _ -> []
+          end
+
+        _ ->
+          []
       end
     end)
   end

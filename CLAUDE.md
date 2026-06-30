@@ -7,7 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A Phoenix LiveView app for browsing and selecting data-donation task scripts. It reads Python platform scripts from a configured directory, extracts their docstrings, and lets users pick a script via a web UI.
 
 Key LiveViews: `HomeLive` (`/`), `ScriptSelectorLive` (`/select`)
-Key business modules: `DdScriptSelector.Platforms` (lists platform scripts), `DdScriptSelector.PyDocExtractor` (parses Python docstrings)
+Key business modules: `DdScriptSelector.Platforms` (lists platform scripts), `DdScriptSelector.PyDocExtractor` (parses Python docstrings), `DdScriptSelector.PlatformsCache` (GenServer; caches platforms list, refreshes every 24h)
+
+Stateless — no database; `priv/repo` is unused.
 
 ## Commands
 
@@ -21,9 +23,9 @@ mix test test/path/to_test.exs   # Run a single test file
 mix test --failed                # Re-run only previously failed tests
 
 mix precommit                    # Pre-commit check: compile (warnings as errors), unlock unused deps, format, test
-mix ecto.reset                   # Drop and recreate database
-mix ecto.gen.migration name      # Generate a migration (always use this, never create manually)
 ```
+
+A `justfile` provides convenience wrappers: `just dev` starts the server; `just dev-builder "http://other:8000"` overrides the builder URL. The app starts fine without a reachable builder API — the platform list will show an error and retry automatically.
 
 ## Architecture
 
@@ -38,6 +40,14 @@ Key web files:
 - `components/layouts.ex` — `<Layouts.app>` wraps all LiveView content; contains `<.flash_group>`
 - `dd_script_selector_web.ex` — defines `use DdScriptSelectorWeb, :live_view` etc.; add global aliases/imports to `html_helpers/0`
 
+## Environment
+
+Key vars (set in `config/runtime.exs` for prod; hardcoded in `config/dev.exs`):
+
+- `BUILDER_BASE` — backend API URL (default: `http://localhost:8000`)
+- `PLATFORMS` — comma-separated platform names (default: `chatgpt,chrome,facebook,instagram,...`)
+- `SECRET_KEY_BASE` — required in prod; generate with `mix phx.gen.secret`
+
 Assets:
 - `assets/js/app.js` and `assets/css/app.css` are the only supported bundles — vendor deps must be imported here
 - Tailwind v4 uses `@import "tailwindcss" source(none)` syntax — no `tailwind.config.js`
@@ -48,7 +58,7 @@ Assets:
 Use `Req` for HTTP requests. Do **not** use `:httpoison`, `:tesla`, or `:httpc`.
 
 ### LiveView
-- Wrap all LiveView templates with `<Layouts.app flash={@flash} ...>` — `MyAppWeb.Layouts` is already aliased
+- Wrap all LiveView templates with `<Layouts.app flash={@flash} ...>` — `DdScriptSelectorWeb.Layouts` is already aliased
 - Use `push_navigate`/`push_patch` in LiveView modules; use `<.link navigate={}>` / `<.link patch={}>` in templates
 - Use LiveView streams (`stream/3`, `stream_insert/3`, `stream_delete/3`) for all collections — never assign plain lists
 - Streams are not enumerable; to filter, refetch data and `stream(..., reset: true)`
@@ -84,3 +94,4 @@ Use `Req` for HTTP requests. Do **not** use `:httpoison`, `:tesla`, or `:httpc`.
 - To wait for a process to finish, use `Process.monitor/1` + `assert_receive {:DOWN, ^ref, :process, ^pid, :normal}` — not sleep
 - Use `has_element?/2` and `element/2` from `Phoenix.LiveViewTest` — never test raw HTML strings
 - `LazyHTML` (included) is available for selector-based HTML inspection in tests
+- `py_doc_extractor_test.exs` requires a live builder API running at `localhost:8000`

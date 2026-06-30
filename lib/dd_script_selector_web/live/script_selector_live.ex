@@ -7,12 +7,21 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
 
 
   def mount(_params, _session, socket) do
-    platforms = PlatformsCache.list()
+    {platforms, init_error} =
+      case PlatformsCache.list() do
+        {:ok, platforms} -> {platforms, false}
+        {:error, _} -> {[], true}
+      end
+
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(DdScriptSelector.PubSub, PlatformsCache.topic())
+    end
 
     socket =
       socket
       |> assign(:platforms, platforms)
       |> assign(:platforms_by_name, Map.new(platforms, &{&1.name, &1}))
+      |> assign(:platforms_init_error, init_error)
       |> assign(:step, :select_platform)
       |> assign(:selected, nil)
       |> assign(:selected_platform, nil)
@@ -290,6 +299,22 @@ defmodule DdScriptSelectorWeb.ScriptSelectorLive do
       end
     else
       {:noreply, socket}
+    end
+  end
+
+  def handle_info(:platforms_available, socket) do
+    case PlatformsCache.list() do
+      {:ok, platforms} ->
+        socket =
+          socket
+          |> assign(:platforms_init_error, false)
+          |> assign(:platforms, platforms)
+          |> assign(:platforms_by_name, Map.new(platforms, &{&1.name, &1}))
+
+        {:noreply, socket}
+
+      {:error, _} ->
+        {:noreply, socket}
     end
   end
 

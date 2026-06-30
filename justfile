@@ -8,8 +8,8 @@ default:
 setup:
     mix setup
 
-# Check builder API then start dev server at localhost:4000
-dev: check-builder
+# Start dev server at localhost:4000
+dev:
     mix phx.server
 
 # Start dev server with interactive shell
@@ -17,11 +17,11 @@ shell:
     iex -S mix phx.server
 
 # Start dev server with a custom platform list (comma-separated)
-dev-platforms platforms: check-builder
+dev-platforms platforms:
     PLATFORMS={{platforms}} mix phx.server
 
 # Start dev server pointing at a custom builder API
-dev-builder builder_base: (check-builder builder_base)
+dev-builder builder_base:
     BUILDER_BASE={{builder_base}} mix phx.server
 
 # Run all tests
@@ -43,7 +43,3 @@ precommit:
 # Format code
 fmt:
     mix format
-
-# Check if the builder API is reachable (fails loudly if not)
-check-builder builder_base="http://localhost:8000":
-    curl -sfo /dev/null {{builder_base}}/config?platform=example && echo "Builder API reachable" || (echo "Builder API unreachable — start dd-script-builder on {{builder_base}}" && exit 1)

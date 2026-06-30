@@ -31,7 +31,14 @@
         </a>
         and we will add it.
       </p>
-      <ul id="platform-list" class="flex-1 min-h-0 overflow-y-auto space-y-2 max-w-lg pr-1">
+      <div :if={@platforms_init_error} class="flex items-start gap-3 rounded-lg border border-warning bg-warning/10 px-4 py-3 text-sm max-w-lg">
+        <.icon name="hero-exclamation-triangle" class="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+        <span>
+          Problem initializing platform list — the builder API may be unavailable or returned invalid data.
+          Retrying automatically in a minute.
+        </span>
+      </div>
+      <ul :if={not @platforms_init_error} id="platform-list" class="flex-1 min-h-0 overflow-y-auto space-y-2 max-w-lg pr-1">
         <li
           :for={platform <- @platforms}
           id={"platform-#{platform.name}"}

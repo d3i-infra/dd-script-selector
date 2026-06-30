@@ -17,8 +17,8 @@ rules.
    numeric prefix incrementing from `0001`, followed by a
    topic-rich slug — enough context that an LLM (or human)
    can recognise the topic from the filename alone and load
-   only what's relevant. Example: `0003-platforms-cache.md`,
-   not `0003-caching.md`.
+   only what's relevant. Example: `0004-platforms-cache-genserver.md`,
+   not `0004-caching.md`.
 4. **Conversational ADRs are escalated.** When a decision
    surfaces inside a conversation that warrants an ADR, the
    user is prompted to escalate it. ADRs are kept concise to
@@ -38,7 +38,8 @@ Each ADR follows this shape:
 # ADR NNNN — Topic
 
 **Status:** Accepted | Superseded by NNNN | Amended by NNNN.
-Source: <where the decision was made — conversation, commit, etc.>.
+Source: <where the decision was made — research/<topic>/,
+campaign step, conversation>.
 
 ## Decision
 
@@ -65,5 +66,5 @@ architectural decisions by:
 2. Loading the ADR(s) relevant to the area being touched —
    selectively, by topic-rich filename.
 3. Treating the ADR's **Decision** as the authoritative
-   default; a clearly better natural design may override,
-   but the override is recorded as a new or amended ADR.
+   default, with the designer-authority caveat (a clearer
+   natural design overrides; the override is recorded).
