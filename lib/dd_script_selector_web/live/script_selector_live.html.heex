@@ -13,15 +13,14 @@
   </div>
 
   <%!-- Step 1: Platform Selection --%>
-  <div :if={@step == :select_platform} class="flex flex-col h-[calc(100dvh-10rem)]">
-    <div class="flex flex-col flex-1 min-h-0 p-8 pb-2">
+  <div :if={@step == :select_platform} class="p-8">
       <h1 class="text-2xl font-bold mb-2" style="color: #252a34;">Select a platform</h1>
       <p class="text-sm mb-6" style="color: #6a6a6a;">
         Choose the platform whose data download package your participants will share.
-        Each platform comes with pre-configured set of options from which you can pick and choose what data from the package you would like to collect. 
+        Each platform comes with pre-configured set of options from which you can pick and choose what data from the package you would like to collect.
       </p>
       <p class="text-sm mb-6" style="color: #6a6a6a;">
-        A missing platform? Contact 
+        A missing platform? Contact
         <a
           href="mailto:datadonation@uu.nl"
           rel="noopener noreferrer"
@@ -38,7 +37,7 @@
           Retrying automatically in a minute.
         </span>
       </div>
-      <ul :if={not @platforms_init_error} id="platform-list" class="flex-1 min-h-0 overflow-y-auto space-y-2 max-w-lg pr-1">
+      <ul :if={not @platforms_init_error} id="platform-list" class="space-y-2 max-w-lg pr-1 mb-6">
         <li
           :for={platform <- @platforms}
           id={"platform-#{platform.name}"}
@@ -59,9 +58,8 @@
           </label>
         </li>
       </ul>
-    </div>
 
-    <div class="sticky bottom-0 bg-base-100 border-t border-base-300 p-4 flex justify-end">
+    <div class="flex justify-end max-w-lg">
       <button
         phx-click="next_step"
         class={["btn btn-primary", is_nil(@selected) && "btn-disabled"]}
