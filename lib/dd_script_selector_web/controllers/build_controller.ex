@@ -6,10 +6,15 @@ defmodule DdScriptSelectorWeb.BuildController do
            [decode_body: false, retry: false] ++ builder_req_opts()
          ) do
       {:ok, %{status: 200, body: body}} ->
+        conn =
+          conn
+          |> put_resp_header("content-type", "application/zip")
+          |> put_resp_header("content-disposition", ~s|attachment; filename="build_#{:os.system_time(:second)}.zip"|)
+          |> send_resp(200, body)
+
+        Req.delete(builder_base() <> "/build/#{id}", [retry: false] ++ builder_req_opts())
+
         conn
-        |> put_resp_header("content-type", "application/zip")
-        |> put_resp_header("content-disposition", ~s|attachment; filename="build_#{:os.system_time(:second)}.zip"|)
-        |> send_resp(200, body)
 
       _ ->
         send_resp(conn, 502, "Build not available")

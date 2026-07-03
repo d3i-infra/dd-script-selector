@@ -11,7 +11,8 @@ delegated to an external dd-script-builder HTTP service.
 `ScriptSelectorLive` triggers builds via `POST <builder_base>/build`
 and polls `GET <builder_base>/status/:id`.
 `BuildController` proxies file downloads from
-`GET <builder_base>/download/:id`.
+`GET <builder_base>/download/:id` and cleans up the build afterwards
+via `DELETE <builder_base>/build/:id`.
 
 The builder base URL is configured via `:builder_base` app env
 (`BUILDER_BASE` env var in production; default `http://localhost:8000`).
